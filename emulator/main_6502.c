@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdint.h> 
+#include <stdlib.h>
 
 
 
 // l'ensemble des instructions
 #define INS_LDA_IM  0xA9
+#define INS_LDA_ZP  0xA5
 
 #define MEM_SIZE  1024 * 64
 
@@ -48,6 +50,17 @@ typedef struct
     byte i : 1;
 
 } cpu_6502 ;
+
+void
+cpu_dump(const cpu_6502 *cpu)
+{
+    printf("/****** CPU DUMP******\n");
+    printf("pc: %04x\n",cpu->pc);
+    printf("sp: %04x\n",cpu->sp);
+    printf("ra: %04x\n",cpu->a);
+    printf("rx: %04x\n",cpu->x);
+    printf("ry: %04x\n",cpu->y);
+}
 
 /**
  * @param mem_6502
@@ -108,6 +121,14 @@ cpu_fectch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
     return data;
 }
 
+byte
+cpu_read_byte_from_adress(uint32_t *cycles, byte src,mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte data = memory->data[src];
+    cycles--;
+    return data;
+}
+
 /**
  * Permet l'execution d'un instruction qui sera
  * lu dans la mémoire
@@ -130,7 +151,13 @@ cpu_execute_inst(uint32_t cycles, mem_6502 *memory, cpu_6502 *cpu)
             cpu->z = (cpu->a == 0);
             cpu->n = (cpu->a & 0b1000000) > 0;
         } break;
-        
+        case INS_LDA_ZP:
+        {
+            byte zp_adress = cpu_fectch_byte(&cycles, memory, cpu);
+            cpu->a = cpu_read_byte_from_adress(&cycles, zp_adress, memory, cpu);
+            cpu->z = (cpu->a == 0);
+            cpu->n = (cpu->a & 0b1000000) > 0;
+        } break;
         default:
             printf("Instruction not handled %d\n", inst);
             break;
@@ -145,19 +172,36 @@ cpu_execute_inst(uint32_t cycles, mem_6502 *memory, cpu_6502 *cpu)
  * Parcour toute la mémoire et affiche octet par octet
  * @param mem_6502
 */
-void
-mem_dump(mem_6502 *mem)
+void HexDump(const void* data, size_t size) 
 {
-    size_t i;
-    for(i=0; i < MEM_SIZE; i++) {
-        if (i % 16 == 0) {
-            if (i != 0) printf (" %s\n");
-            printf (" %04x ", i);
+    char ascii[17];
+    size_t i, j;
+    ascii[16] = '\0';
+    for (i = 0; i < size; ++i) {
+        printf("%02X ", ((unsigned char*)data)[i]);
+        if (((unsigned char*)data)[i] >= ' ' && ((unsigned char*)data)[i] <= '~') {
+            ascii[i % 16] = ((unsigned char*)data)[i];
+        } else {
+            ascii[i % 16] = '.';
         }
-        printf(" %02x", mem->data[i]);
+        if ((i+1) % 8 == 0 || i+1 == size) {
+            printf(" ");
+            if ((i+1) % 16 == 0) {
+                printf("|  %s \n", ascii);
+            } else if (i+1 == size) {
+                ascii[(i+1) % 16] = '\0';
+                if ((i+1) % 16 <= 8) {
+                    printf(" ");
+                }
+                for (j = (i+1) % 16; j < 16; ++j) {
+                    printf("   ");
+                }
+                printf("|  %s \n", ascii);
+            }
+        }
     }
-    printf("\n");
 }
+
 
 
 int main()
@@ -165,12 +209,15 @@ int main()
     mem_6502 mem;
     cpu_6502 cpu;
     cpu_reset(&cpu, &mem);
-    mem.data[0xFFFC] = INS_LDA_IM;
+    mem.data[0xFFFC] = INS_LDA_ZP;
     mem.data[0xFFFD] = 0x42;
+    mem.data[0x0042] = 0x84;
 
-    mem_dump(&mem);
-    // cpu_execute_inst(2, &mem, &cpu);
-    // int a = 1;
+    // mem_dump(&mem);
+    // HexDump(mem.data, MEM_SIZE);
+    // cpu_dump(&cpu);
+    cpu_execute_inst(3, &mem, &cpu);
+    // int a = 1;ap_helptext
     // size_t o = cpu_fectch_byte(&a, &mem, &cpu);
 
     // mem_dump(&mem);
