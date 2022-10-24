@@ -149,8 +149,12 @@ void
 mem_dump(mem_6502 *mem)
 {
     size_t i;
-    for(i=0; i < MEM_SIZE - 1; i++) {
-        printf("%X ", mem->data[i]);
+    for(i=0; i < MEM_SIZE; i++) {
+        if (i % 16 == 0) {
+            if (i != 0) printf (" %s\n");
+            printf (" %04x ", i);
+        }
+        printf(" %02x", mem->data[i]);
     }
     printf("\n");
 }
