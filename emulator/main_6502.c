@@ -4,9 +4,10 @@
 
 
 
-// l'ensemble des instructions
-#define INS_LDA_IM  0xA9
-#define INS_LDA_ZP  0xA5
+// Instruction set
+#define INS_LDA_IM      0xA9
+#define INS_LDA_ZP      0xA5
+#define INS_LDA_ZPX     0xB5
 
 #define MEM_SIZE  1024 * 64
 
@@ -105,6 +106,19 @@ cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
 }
 
 /**
+ * LDA_set_status
+ * permet de mettre des status apres instructions
+ * pour certaines instructions les status sont pareil
+ * donc on factorise
+*/
+void
+set_LDA_status(cpu_6502 *cpu)
+{
+    cpu->z = (cpu->a == 0);
+    cpu->n = (cpu->a & 0b1000000) > 0;
+}
+
+/**
  * Recupere un byte dans la mémoire
  * @param uint32_t cycles : nombre de cycle pour le fetch
  * @param mem_6502
@@ -148,15 +162,22 @@ cpu_execute_inst(uint32_t cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte value = cpu_fectch_byte(&cycles, memory, cpu);
             cpu->a = value;
-            cpu->z = (cpu->a == 0);
-            cpu->n = (cpu->a & 0b1000000) > 0;
+            set_LDA_status(cpu);
         } break;
         case INS_LDA_ZP:
         {
-            byte zp_adress = cpu_fectch_byte(&cycles, memory, cpu);
-            cpu->a = cpu_read_byte_from_adress(&cycles, zp_adress, memory, cpu);
-            cpu->z = (cpu->a == 0);
-            cpu->n = (cpu->a & 0b1000000) > 0;
+            byte zp_addr = cpu_fectch_byte(&cycles, memory, cpu);
+            cpu->a = cpu_read_byte_from_adress(&cycles, zp_addr, memory, cpu);
+            set_LDA_status(cpu);
+        } break;
+        case INS_LDA_ZPX:
+        {
+            byte zp_addr = cpu_fectch_byte(&cycles, memory, cpu);
+            zp_addr += cpu->x;
+            cycles --;
+
+            cpu->a = cpu_read_byte_from_adress(&cycles, zp_addr, memory, cpu);
+            set_LDA_status(cpu);
         } break;
         default:
             printf("Instruction not handled %d\n", inst);
@@ -216,7 +237,9 @@ int main()
     // mem_dump(&mem);
     // HexDump(mem.data, MEM_SIZE);
     // cpu_dump(&cpu);
-    cpu_execute_inst(3, &mem, &cpu);
+    // cpu_execute_inst(3, &mem, &cpu);
+    // HexDump(mem.data, MEM_SIZE);
+    // cpu_dump(&cpu);
     // int a = 1;ap_helptext
     // size_t o = cpu_fectch_byte(&a, &mem, &cpu);
 
