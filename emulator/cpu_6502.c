@@ -158,7 +158,7 @@ hexDump(char *desc, void *addr, int len)
  * @return byte
 */
 byte
-cpu_fectch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
     byte data = memory->data[cpu->pc];
     cpu->pc++;
@@ -221,25 +221,25 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
     while (*cycles > 0)
     {
         printf("tiks: %d\n", *cycles);
-        byte inst = cpu_fectch_byte(cycles, memory, cpu);
+        byte inst = cpu_fetch_byte(cycles, memory, cpu);
         printf("Ins: %hhx\n", inst);
         switch (inst)
         {
         case INS_LDA_IM:
         {
-            byte value = cpu_fectch_byte(cycles, memory, cpu);
+            byte value = cpu_fetch_byte(cycles, memory, cpu);
             cpu->a = value;
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ZP:
         {
-            byte zp_addr = cpu_fectch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
             cpu->a = cpu_read_byte_from_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ZPX:
         {
-            byte zp_addr = cpu_fectch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
             zp_addr += cpu->x;
             cpu->a = cpu_read_byte_from_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
@@ -248,6 +248,14 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             word abs_addr = cpu_fetch_word(cycles, memory, cpu);
             cpu->a = cpu_read_byte_from_adress(cycles, abs_addr, memory, cpu); 
+            set_LDA_status(cpu);
+        } break;
+        case INS_LDA_ABSX:
+        {
+            word absx_addr = cpu_fetch_word(cycles, memory, cpu);
+            (absx_addr += cpu->x);
+            cpu->a = cpu_read_byte_from_adress(cycles, absx_addr, memory, cpu);
+            // printf("addr %hhx\n", t);
             set_LDA_status(cpu);
         } break;
         case INS_JSR:

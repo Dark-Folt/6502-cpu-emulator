@@ -11,6 +11,7 @@
 #define INS_LDA_ZP      0xA5
 #define INS_LDA_ZPX     0xB5
 #define INS_LDA_ABS     0xAD
+#define INS_LDA_ABSX    0xBD
 #define INS_JSR         0x20  
 
 #define MEM_SIZE  1024 * 64
@@ -108,7 +109,7 @@ hexDump(char *desc, void *addr, int len);
  * @return byte
 */
 byte
-cpu_fectch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
+cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 byte
 cpu_read_byte_from_adress(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
