@@ -12,6 +12,9 @@
 #define INS_LDA_ZPX     0xB5
 #define INS_LDA_ABS     0xAD
 #define INS_LDA_ABSX    0xBD
+#define INS_LDA_ABSY    0xB9
+#define INS_LDA_INDX    0xA1
+#define INS_LDA_INDY    0xB1
 #define INS_JSR         0x20  
 
 #define MEM_SIZE  1024 * 64
@@ -19,6 +22,7 @@
 typedef uint8_t     byte;
 typedef uint16_t    word;
 typedef uint32_t    qword;
+
 
 /**
  * mem_6502
@@ -47,7 +51,7 @@ typedef struct
     // 8 bits registers
     byte a; byte x; byte y;
     // flags
-    byte p : 1;
+    byte b : 1;
     byte c : 1;
     byte n : 1;
     byte v : 1;

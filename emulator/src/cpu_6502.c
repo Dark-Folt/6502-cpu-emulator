@@ -1,4 +1,4 @@
-#include "cpu_6502.h"
+#include "../include/cpu_6502.h"
 
 void
 cpu_dump(const cpu_6502 *cpu)
@@ -41,7 +41,7 @@ cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
     cpu->x = 0;
     cpu->y = 0;
     // flags
-    cpu->p = 0;
+    cpu->b = 0;
     cpu->c = 0;
     cpu->n = 0;
     cpu->v = 0;
@@ -175,13 +175,20 @@ cpu_read_byte_from_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_650
     return data;
 }
 
+/**
+ * Permet de lire un mot
+ * vue que c'est little endian le low byte avant le hight
+ * lb: low byte
+ * hb: hight byte
+*/
 word
 cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
 {
-    printf("src: %x\n", addr);
-    word data = memory->data[addr];
+    byte lb  = cpu_read_byte_from_adress(cycles, addr, memory, cpu);
+    byte hb  = cpu_read_byte_from_adress(cycles, addr + 1, memory, cpu);
     (*cycles)--;
-    return data; 
+
+    return (lb | (hb << 8));
 }
 
 word
@@ -220,9 +227,8 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
     while (*cycles > 0)
     {
-        printf("tiks: %d\n", *cycles);
-        byte inst = cpu_fetch_byte(cycles, memory, cpu);
-        printf("Ins: %hhx\n", inst);
+        // lecture de l'OPcode pour savoir l'instruction à executer
+        byte inst = cpu_fetch_byte(cycles, memory, cpu); 
         switch (inst)
         {
         case INS_LDA_IM:
@@ -257,6 +263,36 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             cpu->a = cpu_read_byte_from_adress(cycles, absx_addr, memory, cpu);
             // printf("addr %hhx\n", t);
             set_LDA_status(cpu);
+        } break;
+        case INS_LDA_ABSY:
+        {
+            word absy_addr = cpu_fetch_word(cycles, memory, cpu);
+            word absy_addr_y = absy_addr + cpu->y;
+            cpu->a = cpu_read_byte_from_adress(cycles, absy_addr, memory, cpu);
+            if (absy_addr_y - absy_addr >= 0xFF)
+            {
+                cycles--;
+            }
+            set_LDA_status(cpu);
+        } break;
+        case INS_LDA_INDX:
+        {
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            zp_addr += cpu->x;
+            word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_adress(cycles, e_addr, memory, cpu);
+            set_LDA_status(cpu);
+        }break;
+        case INS_LDA_INDY:
+        {
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
+            word e_addr_y = e_addr + cpu->y;
+            cpu->a = cpu_read_byte_from_adress(cycles, e_addr_y, memory, cpu);
+            if (e_addr_y - e_addr >= 0xFF)
+            {
+                cycles--;
+            }
         } break;
         case INS_JSR:
         {
