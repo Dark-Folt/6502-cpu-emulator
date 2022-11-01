@@ -1,19 +1,22 @@
 
 CC=gcc
 CFLAGS=-g -Wall
-OBJS=obj/cpu_6502.o obj/main_6502.o 
+SRC=src
+OBJ=obj
+SRCS=$(wildcard $(SRC)/*.c)
+OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 BIN=bin/main
 
 all:$(BIN)
 
-bin/main: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o main
+$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@
 
 
-obj/%.o: src/%.c
+$(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
 clean:
-	$(RM) -r bin/* bin/*
+	rm -r bin/* $(OBJ)/*
 
