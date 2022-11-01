@@ -41,7 +41,7 @@ cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
     cpu->x = 0;
     cpu->y = 0;
     // flags
-    cpu->p = 0;
+    cpu->b = 0;
     cpu->c = 0;
     cpu->n = 0;
     cpu->v = 0;
