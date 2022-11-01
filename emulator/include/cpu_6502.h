@@ -23,6 +23,7 @@ typedef uint8_t     byte;
 typedef uint16_t    word;
 typedef uint32_t    qword;
 
+
 /**
  * mem_6502
  * Dénie la mémoire
@@ -50,7 +51,7 @@ typedef struct
     // 8 bits registers
     byte a; byte x; byte y;
     // flags
-    byte p : 1;
+    byte b : 1;
     byte c : 1;
     byte n : 1;
     byte v : 1;
