@@ -90,11 +90,91 @@ Test(CPU, load_zero_page_x_with_wrong_cycles)
     memory.data[0xFFFD] = 0x05; 
     memory.data[0x0009] = 0x37;
 
-    uint32_t cyles = 6;
-    cpu_execute_inst(&cyles, &memory, &cpu);
+    uint32_t cycles = 6;
+    cpu_execute_inst(&cycles, &memory, &cpu);
 
     cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
-    cr_assert_eq(cyles, 2);
+    cr_assert_eq(cycles, 2);
     cr_expect_eq(cpu.z, 0);
     cr_expect_eq(cpu.n, 0);
 }
+
+Test(CPU, load_accumulator_absolute)
+{
+    cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDA_ABS;
+    memory.data[0xFFFD] = 0x23; 
+    memory.data[0xFFFE] = 0x56; 
+    memory.data[0x5623] = 0x65; 
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x65, "0x65 doit être la valeur dans le registre a");
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+
+Test(CPU, load_accumulator_absolute_x)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 0x06;
+    memory.data[0xFFFC] = INS_LDA_ABSX;
+    memory.data[0xFFFD] = 0x23; 
+    memory.data[0xFFFE] = 0x56; 
+    memory.data[0x5629] = 0x18; 
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x18, "0x18 doit être la valeur dans le registre a");
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+Test(CPU, load_accumulator_absolute_x_cross_pass)
+{
+    // TODO:
+    // cpu_reset(&cpu, &memory);
+    // cpu.x = 0x06;
+    // memory.data[0xFFFC] = INS_LDA_ABSX;
+    // memory.data[0xFFFD] = 0x23; 
+    // memory.data[0xFFFE] = 0x56; 
+    // memory.data[0x5629] = 0x18; 
+
+    // uint32_t cycles = 4;
+    // cpu_execute_inst(&cycles, &memory, &cpu);
+
+    // cr_expect(cpu.a == 0x18, "0x18 doit être la valeur dans le registre a");
+    // cr_assert_eq(cycles, 0);
+    // cr_expect_eq(cpu.z, 0);
+    // cr_expect_eq(cpu.n, 0);
+}
+
+
+Test(CPU, load_accumulator_absolute_y)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.y = 0x24;
+    memory.data[0xFFFC] = INS_LDA_ABSY;
+    memory.data[0xFFFD] = 0x23; 
+    memory.data[0xFFFE] = 0x56; 
+    memory.data[0x5647] = 0x87; 
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x87);
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+
+
+
+
+
