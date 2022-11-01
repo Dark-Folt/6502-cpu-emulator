@@ -79,4 +79,20 @@ Test(CPU, load_zero_page_x)
 
     cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
     cr_assert_eq(n, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+Test(CPU, loadZeroPageEnDepassantLeMax)
+{
+    cpu.x = 0xFF;
+    memory.data[0xFFFC] = INS_LDA_ZPX;
+    memory.data[0xFFFD] = 0x05; 
+    memory.data[0x0104] = 0x37;
+
+    uint32_t  n = 4;
+    cpu_execute_inst(&n, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
+    cr_assert_eq(n, 0);
 }
