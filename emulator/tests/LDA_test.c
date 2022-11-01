@@ -38,3 +38,45 @@ Test(CPU,  zero_page)
 {
     cr_assert(cpu.pc == 0xFFFC);
 }
+
+
+/** Test instructions **/
+Test(CPU, load_immediate_address)
+{
+    memory.data[0xFFFC] = INS_LDA_IM;
+    memory.data[0xFFFD] = 0x84; 
+
+    uint32_t  n = 2;
+    cpu_execute_inst(&n, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x84, "0x84 doit être la valeur dans le registre");
+    cr_expect(n == 0, "le nombre de cycle doit être égale à 0");
+}
+
+Test(CPU, load_zero_page)
+{
+    memory.data[0xFFFC] = INS_LDA_ZP;
+    memory.data[0xFFFD] = 0x05; 
+    memory.data[0x0005] = 0x65;
+
+    uint32_t  n = 3;
+    cpu_execute_inst(&n, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x65, "0x65 doit être la valeur dans le registre a");
+    cr_expect(n == 0, "le nombre de cycle doit être égale à 0");
+}
+
+
+Test(CPU, load_zero_page_x)
+{
+    cpu.x = 0x04;
+    memory.data[0xFFFC] = INS_LDA_ZPX;
+    memory.data[0xFFFD] = 0x05; 
+    memory.data[0x0009] = 0x37;
+
+    uint32_t  n = 4;
+    cpu_execute_inst(&n, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
+    cr_assert_eq(n, 0);
+}
