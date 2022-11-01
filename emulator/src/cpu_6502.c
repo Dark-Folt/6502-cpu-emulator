@@ -168,13 +168,20 @@ cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 }
 
 byte
-cpu_read_byte_from_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_6502 *cpu)
+cpu_read_byte_from_zp_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_6502 *cpu)
 {
     byte data = memory->data[addr];
     (*cycles)--;
     return data;
 }
 
+byte
+cpu_read_byte_from_word_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte data = memory->data[addr];
+    (*cycles)--;
+    return data;
+}
 /**
  * Permet de lire un mot
  * vue que c'est little endian le low byte avant le hight
@@ -184,8 +191,8 @@ cpu_read_byte_from_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_650
 word
 cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
 {
-    byte lb  = cpu_read_byte_from_adress(cycles, addr, memory, cpu);
-    byte hb  = cpu_read_byte_from_adress(cycles, addr + 1, memory, cpu);
+    byte lb  = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
+    byte hb  = cpu_read_byte_from_zp_adress(cycles, addr + 1, memory, cpu);
     (*cycles)--;
 
     return (lb | (hb << 8));
@@ -195,12 +202,15 @@ word
 cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
     // 6502 is little endian
-    word data = memory->data[cpu->pc];
-    data |= (memory->data[cpu->pc] << 8);
-    cpu->pc++;
+    // word data = memory->data[cpu->pc];
+    // data |= (memory->data[cpu->pc] << 8);
+    // cpu->pc++;
+    byte lb = memory->data[cpu->pc];
+    byte hb = memory->data[cpu->pc + 1];
+    word w = lb | (hb << 8);
     (*cycles) -= 2;
 
-    return data;
+    return w;
 }
 
 /**
@@ -222,7 +232,7 @@ cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, c
  * @param memory
  * @param cpu
 */
-void
+uint32_t
 cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
     while (*cycles > 0)
@@ -240,38 +250,36 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_LDA_ZP:
         {
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
-            cpu->a = cpu_read_byte_from_adress(cycles, zp_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ZPX:
         {
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
             zp_addr += cpu->x;
-            cpu->a = cpu_read_byte_from_adress(cycles, zp_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ABS:
         {
             word abs_addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu->a = cpu_read_byte_from_adress(cycles, abs_addr, memory, cpu); 
-            set_LDA_status(cpu);
+            cpu->a = cpu_read_byte_from_word_adress(cycles, abs_addr, memory, cpu);
         } break;
         case INS_LDA_ABSX:
         {
             word absx_addr = cpu_fetch_word(cycles, memory, cpu);
             (absx_addr += cpu->x);
-            cpu->a = cpu_read_byte_from_adress(cycles, absx_addr, memory, cpu);
-            // printf("addr %hhx\n", t);
+            cpu->a = cpu_read_byte_from_word_adress(cycles, absx_addr, memory, cpu);
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ABSY:
         {
             word absy_addr = cpu_fetch_word(cycles, memory, cpu);
             word absy_addr_y = absy_addr + cpu->y;
-            cpu->a = cpu_read_byte_from_adress(cycles, absy_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_adress(cycles, absy_addr_y, memory, cpu);
             if (absy_addr_y - absy_addr >= 0xFF)
             {
-                cycles--;
+                (*cycles)--;
             }
             set_LDA_status(cpu);
         } break;
@@ -280,7 +288,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
             zp_addr += cpu->x;
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
-            cpu->a = cpu_read_byte_from_adress(cycles, e_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
             set_LDA_status(cpu);
         }break;
         case INS_LDA_INDY:
@@ -288,10 +296,10 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             word e_addr_y = e_addr + cpu->y;
-            cpu->a = cpu_read_byte_from_adress(cycles, e_addr_y, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr_y, memory, cpu);
             if (e_addr_y - e_addr >= 0xFF)
             {
-                cycles--;
+                (*cycles)--;
             }
         } break;
         case INS_JSR:
@@ -303,9 +311,8 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         } break;
         default:
             printf("Instruction not handled %d\n", inst);
-            break;
+            return (*cycles);
         }
-        // if (inst == 0){ break; } 
     }
-    
+    return (*cycles);
 }
