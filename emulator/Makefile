@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -Wunused-variable -Werror
 SRC=src
 OBJ=obj
 INC=include
@@ -11,6 +11,7 @@ BIN=bin/main
 
 TEST=tests
 TESTLIB=-lcriterion
+TOBJS=$(OBJ)/cpu_6502.o
 TESTS=$(wildcard $(TEST)/*.c)
 TESTBINS=$(patsubst $(TEST)/%.c, $(TEST)/bin/%, $(TESTS))
 
@@ -26,11 +27,11 @@ $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-$(TEST)/bin/%: $(TESTS) $(OBJS)
-	$(CC) $(TESTS) -o $@ -lcriterion
+$(TEST)/bin/%: $(TESTS) $(TOBJS)
+	$(CC) $^ -o $@ -lcriterion
 
 test: $(TEST)/bin $(TESTBINS) 
-	for test in $(TESTBINS); do ./$$test; done
+	for test in $(TESTBINS); do ./$$test --verbose; done
 
 
 clean:
