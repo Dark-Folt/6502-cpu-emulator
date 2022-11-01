@@ -1,4 +1,4 @@
-#include "cpu_6502.h"
+#include "../include/cpu_6502.h"
 
 void
 cpu_dump(const cpu_6502 *cpu)
