@@ -256,8 +256,19 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_LDA_ZPX:
         {
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            uint32_t consumed_cyles = 2; // fetch_opcode + fectch_zp_addr
+            uint32_t expted_cycles = 5; // when cross page
+
+            if ((*cycles + consumed_cyles) == expted_cycles) {
+                if (zp_addr + cpu->x > 0xFF) {
+                    (*cycles)--;
+                }else {
+                    break;
+                }
+            }
             zp_addr += cpu->x;
             cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            (*cycles)--;
             set_LDA_status(cpu);
         } break;
         case INS_LDA_ABS:
