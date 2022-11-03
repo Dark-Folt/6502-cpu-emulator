@@ -151,17 +151,34 @@ hexDump(char *desc, void *addr, int len)
 
 
 /**
- * Recupere un byte dans la mémoire
+ * Recupere le byte de poids faible dans la mémoire
  * @param uint32_t cycles : nombre de cycle pour le fetch
  * @param mem_6502
  * @param cpu_6502
  * @return byte
 */
 byte
-cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+cpu_fetch_lsb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
     byte data = memory->data[cpu->pc];
     cpu->pc += 1;
+    (*cycles) -= 1;
+
+    return data;
+}
+
+/**
+ * Recupere le byte de poifs fort dans la mémoire
+ * @param uint32_t cycles : nombre de cycle pour le fetch
+ * @param mem_6502
+ * @param cpu_6502
+ * @return byte
+*/
+byte
+cpu_fetch_msb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte data = memory->data[cpu->pc + 1];
+    cpu->pc += 2;
     (*cycles) -= 1;
 
     return data;
@@ -242,26 +259,26 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
     while (*cycles > 0)
     {
         // lecture de l'OPcode pour savoir l'instruction à executer
-        byte inst = cpu_fetch_byte(cycles, memory, cpu); 
+        byte inst = cpu_fetch_lsb(cycles, memory, cpu); 
         switch (inst)
         {
         case INS_LDA_IM:
         {
-            byte value = cpu_fetch_byte(cycles, memory, cpu);
+            byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = value;
             set_LDA_status(cpu);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ZP:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ZPX:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             if (zp_addr + cpu->x > 0xFF) {
                 (*cycles) -= 1;
             }
@@ -299,7 +316,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         } break;
         case INS_LDA_INDX:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->x;
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
@@ -308,7 +325,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         }break;
         case INS_LDA_INDY:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             word e_addr_y = e_addr + cpu->y;
             cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr_y, memory, cpu);
@@ -328,20 +345,20 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         } break;
         case INS_LDX_IM:
         {
-            byte value = cpu_fetch_byte(cycles, memory, cpu);
+            byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->x = value;
             if (*cycles) return (*cycles);
         }break;
         case INS_LDX_ZP:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             
             if (*cycles) return (*cycles);
         }break;
         case INS_LDX_ZPY:
         {
-            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->y;
             cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             (*cycles) -= 1;
@@ -362,6 +379,43 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
                 (*cycles) -= 1;
             }
             cpu->x = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDY_IM:
+        {
+            byte value = cpu_fetch_msb(cycles, memory, cpu);
+            cpu->y = value;
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDY_ZP:
+        {
+            byte addr = cpu_fetch_lsb(cycles, memory, cpu);
+            cpu->y = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDY_ZPX:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            zp_addr += cpu->x;
+            cpu->y = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            (*cycles) -= 1;
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDY_ABS:
+        {
+            word abs_addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu->y = cpu_read_byte_from_word_adress(cycles, abs_addr, memory, cpu); 
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDY_ABSX:
+        {
+            word abs_addr = cpu_fetch_word(cycles, memory, cpu);
+            word e_addr = abs_addr + cpu->x;
+            if (e_addr - abs_addr >= 0xFF)
+            {
+                (*cycles) -= 1;
+            }
+            cpu->y = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         default:

@@ -26,6 +26,12 @@
 #define INS_LDX_ZPY     0xB6
 #define INS_LDX_ABS     0xAE
 #define INS_LDX_ABSY    0xBE
+// LDY
+#define INS_LDY_IM      0xA0
+#define INS_LDY_ZP      0xA4
+#define INS_LDY_ZPX     0xB4
+#define INS_LDY_ABS     0xAC
+#define INS_LDY_ABSX    0xBC
 
 
 #define MEM_SIZE  1024 * 64
@@ -117,14 +123,24 @@ void
 hexDump(char *desc, void *addr, int len);
 
 /**
- * Recupere un byte dans la mémoire
+ * Recupere un byte de poids faible dans la mémoire (LSB)
  * @param uint32_t cycles : nombre de cycle pour le fetch
  * @param mem_6502
  * @param cpu_6502
  * @return byte
 */
 byte
-cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
+cpu_fetch_lsb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
+
+/**
+ * Recupere un byte de poids fort dans la mémoire (MSB)
+ * @param uint32_t cycles : nombre de cycle pour le fetch
+ * @param mem_6502
+ * @param cpu_6502
+ * @return byte
+*/
+byte
+cpu_fetch_msb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 byte
 cpu_read_byte_from_zp_adress(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
