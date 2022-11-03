@@ -39,9 +39,10 @@ Test(CPU,  zero_page)
     cr_assert(cpu.pc == 0xFFFC);
 }
 
-
-/** Test instructions **/
-Test(CPU, load_immediate_address)
+/**
+ * Load Accumulator Tests
+*/
+Test(CPU, LDA_IM)
 {
     memory.data[0xFFFC] = INS_LDA_IM;
     memory.data[0xFFFD] = 0x84; 
@@ -53,7 +54,7 @@ Test(CPU, load_immediate_address)
     cr_expect(n == 0, "le nombre de cycle doit être égale à 0");
 }
 
-Test(CPU, load_zero_page)
+Test(CPU, LDA_ZP)
 {
     memory.data[0xFFFC] = INS_LDA_ZP;
     memory.data[0xFFFD] = 0x05; 
@@ -66,8 +67,7 @@ Test(CPU, load_zero_page)
     cr_expect(n == 0, "le nombre de cycle doit être égale à 0");
 }
 
-
-Test(CPU, load_zero_page_x)
+Test(CPU, LDA_ZPX)
 {
     cpu.x = 0x04;
     memory.data[0xFFFC] = INS_LDA_ZPX;
@@ -83,7 +83,7 @@ Test(CPU, load_zero_page_x)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_zero_page_x_when_it_wraps)
+Test(CPU, LDA_ZPX_when_it_wraps)
 {
     cpu.x = 0xFF;
     memory.data[0xFFFC] = INS_LDA_ZPX;
@@ -98,7 +98,7 @@ Test(CPU, load_zero_page_x_when_it_wraps)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_zero_page_x_with_wrong_cycles)
+Test(CPU, LDA_ZPX_with_wrong_cycles)
 {
     cpu.x = 0x04;
     memory.data[0xFFFC] = INS_LDA_ZPX;
@@ -113,9 +113,9 @@ Test(CPU, load_zero_page_x_with_wrong_cycles)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_absolute)
+Test(CPU, LDA_ABS)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     memory.data[0xFFFC] = INS_LDA_ABS;
     memory.data[0xFFFD] = 0x23; 
     memory.data[0xFFFE] = 0x56; 
@@ -130,10 +130,9 @@ Test(CPU, load_accumulator_absolute)
     cr_expect_eq(cpu.n, 0);
 }
 
-
-Test(CPU, load_accumulator_absolute_x)
+Test(CPU, LDA_ABSX)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.x = 0x06;
     memory.data[0xFFFC] = INS_LDA_ABSX;
     memory.data[0xFFFD] = 0x23; 
@@ -149,9 +148,9 @@ Test(CPU, load_accumulator_absolute_x)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_absolute_y)
+Test(CPU, LDA_ABSY)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.y = 0x24;
     memory.data[0xFFFC] = INS_LDA_ABSY;
     memory.data[0xFFFD] = 0x23; 
@@ -167,9 +166,9 @@ Test(CPU, load_accumulator_absolute_y)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_index_x)
+Test(CPU, LDA_INDX)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.x = 0x24;
     memory.data[0xFFFC] = INS_LDA_INDX;
     memory.data[0xFFFD] = 0x23; 
@@ -186,9 +185,9 @@ Test(CPU, load_accumulator_index_x)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_index_x_with_wrong_cycles)
+Test(CPU, LDA_INDX_with_wrong_cycles)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.x = 0x24;
     memory.data[0xFFFC] = INS_LDA_INDX;
     memory.data[0xFFFD] = 0x23; 
@@ -204,10 +203,9 @@ Test(CPU, load_accumulator_index_x_with_wrong_cycles)
     cr_expect_eq(cpu.n, 0);
 }
 
-
-Test(CPU, load_accumulator_index_y)
+Test(CPU, LDA_INDY)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.y = 0x04;
     memory.data[0xFFFC] = INS_LDA_INDY;
     memory.data[0xFFFD] = 0x02; 
@@ -224,9 +222,9 @@ Test(CPU, load_accumulator_index_y)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_index_y_if_page_cross)
+Test(CPU, LDA_INDY_if_page_cross)
 {
-    cpu_reset(&cpu, &memory);
+    // cpu_reset(&cpu, &memory);
     cpu.y = 0xFF;
     memory.data[0xFFFC] = INS_LDA_INDY;
     memory.data[0xFFFD] = 0x02; 
@@ -242,4 +240,205 @@ Test(CPU, load_accumulator_index_y_if_page_cross)
     cr_expect_eq(cpu.z, 0);
     cr_expect_eq(cpu.n, 0);
 }
+
+/**
+ * Load X Register Tests
+*/
+
+Test(CPU, LDX_IM)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDX_IM;
+    memory.data[0xFFFD] = 0x02; 
+
+    uint32_t  cycles = 2;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0x02);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDX_ZP)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDX_ZP;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0x44; 
+
+    uint32_t  cycles = 3;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0x44);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDX_ZPY)
+{
+    // cpu_reset(&cpu, &memory);
+    cpu.y = 0x04;
+    memory.data[0xFFFC] = INS_LDX_ZPY;
+    memory.data[0xFFFD] = 0x08;
+    memory.data[0x000C] = 0x88;
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0x88);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDX_ABS)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDX_ABS;
+    memory.data[0xFFFD] = 0x08;
+    memory.data[0xFFFE] = 0x80;
+    memory.data[0x8008] = 0xBE;
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0xBE);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDX_ABSY)
+{
+    // cpu_reset(&cpu, &memory);
+    cpu.y = 0x24;
+    memory.data[0xFFFC] = INS_LDX_ABSY;
+    memory.data[0xFFFD] = 0x08;
+    memory.data[0xFFFE] = 0x80;
+    memory.data[0x802C] = 0xA1;
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0xA1);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDX_ABSY_page_crossed)
+{
+    // cpu_reset(&cpu, &memory);
+    cpu.y = 0xFF;
+    memory.data[0xFFFC] = INS_LDX_ABSY;
+    memory.data[0xFFFD] = 0x08;
+    memory.data[0xFFFE] = 0x80;
+    memory.data[0x8107] = 0xA4;
+
+    uint32_t  cycles = 5;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0xA4);
+    cr_assert_eq(cycles, 0);
+}
+
+
+/**
+ * Load Y Register Tests
+*/
+
+
+Test(CPU, LDY_IM)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDY_IM;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0xFFFE] = 0xB3; 
+
+    uint32_t  cycles = 2;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0xB3);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDY_ZP)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDY_ZP;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0xB3; 
+
+    uint32_t  cycles = 3;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0xB3);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDY_ZPX)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDY_ZPX;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0xB3; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0xB3);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDY_ABS)
+{
+    // cpu_reset(&cpu, &memory);
+    memory.data[0xFFFC] = INS_LDY_ABS;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0xB3; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0xB3);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDY_ABSX)
+{
+    // cpu_reset(&cpu, &memory);
+    cpu.x = 0x36;
+    memory.data[0xFFFC] = INS_LDY_ABSX;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0xFFFE] = 0xB3; 
+    memory.data[0xB338] = 0x87; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0x87);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, LDY_ABX_page_cross)
+{
+    // cpu_reset(&cpu, &memory);
+    cpu.x = 0xFF;
+    memory.data[0xFFFC] = INS_LDY_ABSX;
+    memory.data[0xFFFD] = 0x80; 
+    memory.data[0xFFFE] = 0x90; 
+    memory.data[0x917F] = 0x87; 
+
+    uint32_t  cycles = 5;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0x87);
+    cr_assert_eq(cycles, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
