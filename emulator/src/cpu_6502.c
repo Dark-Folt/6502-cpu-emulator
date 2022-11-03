@@ -313,6 +313,8 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             zp_addr += cpu->x;
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            (*cycles) -= 1;
+            if (*cycles) goto end_b;
         }break;
         case INS_LDA_INDY:
         {
@@ -337,6 +339,6 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             return (*cycles);
         }
     }
-// end_b:
+end_b:
     return (*cycles);
 }

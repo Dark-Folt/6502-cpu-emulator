@@ -198,7 +198,6 @@ Test(CPU, load_accumulator_index_x_with_wrong_cycles)
 
     uint32_t cycles = 9;
     cpu_execute_inst(&cycles, &memory, &cpu);
-    printf("cycles: %d\n",cycles);
     cr_expect(cpu.a == 0x04);
     cr_assert_eq(cycles, 3);
     cr_expect_eq(cpu.z, 0);
