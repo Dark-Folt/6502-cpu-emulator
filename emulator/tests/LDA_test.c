@@ -224,10 +224,24 @@ Test(CPU, load_accumulator_index_y)
     cr_expect_eq(cpu.n, 0);
 }
 
+Test(CPU, load_accumulator_index_y_if_page_cross)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.y = 0xFF;
+    memory.data[0xFFFC] = INS_LDA_INDY;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0x00; 
+    memory.data[0x0003] = 0x80; 
+    memory.data[0x80FF] = 0x37; 
 
+    uint32_t cycles = 6;
+    cpu_execute_inst(&cycles, &memory, &cpu);
 
-
-
+    cr_expect(cpu.a == 0x37);
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
 
 
 
