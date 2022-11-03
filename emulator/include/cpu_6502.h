@@ -116,7 +116,10 @@ byte
 cpu_fetch_byte(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 byte
-cpu_read_byte_from_adress(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
+cpu_read_byte_from_zp_adress(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
+
+byte
+cpu_read_byte_from_word_adress(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
 
 word
 cpu_read_word_from_adress(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
@@ -137,7 +140,7 @@ cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, c
  * @param memory
  * @param cpu
 */
-void
+uint32_t
 cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 #endif
