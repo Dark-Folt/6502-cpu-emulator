@@ -180,6 +180,7 @@ cpu_read_byte_from_word_adress(uint32_t *cycles, word addr, mem_6502 *memory, cp
 {
     byte data = memory->data[addr];
     (*cycles) -= 1;
+  
     return data;
 }
 
@@ -199,7 +200,6 @@ cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_650
 
     return (lb | (hb << 8));
 }
-
 
 word
 cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)

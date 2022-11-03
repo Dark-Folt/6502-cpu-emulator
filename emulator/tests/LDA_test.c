@@ -243,22 +243,3 @@ Test(CPU, load_accumulator_index_y_if_page_cross)
     cr_expect_eq(cpu.n, 0);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

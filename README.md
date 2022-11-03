@@ -1,4 +1,5 @@
 # 6502-cpu-emulator
+
 Petit émulateur du mirco processeur 6502 en C.
 
 But personnel : apprendre comment fonctionne les micro-processeurs
