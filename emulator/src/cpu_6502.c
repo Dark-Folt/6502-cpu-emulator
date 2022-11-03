@@ -233,9 +233,10 @@ void
 cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, cpu_6502 *cpu)
 {
     memory->data[dst] = (data & 0xFF);
+    (*cycles) -= 1;
     memory->data[dst + 1] = (data >> 8);
+    (*cycles) -= 1;
     cpu->sp += 1;
-    (*cycles) -= 2;
 }
 
 /**
@@ -271,15 +272,8 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_LDA_ZPX:
         {
             byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
-            uint32_t consumed_cyles = 2; // fetch_opcode + fectch_zp_addr
-            uint32_t expted_cycles = 5; // when cross page
-
-            if ((*cycles + consumed_cyles) == expted_cycles) {
-                if (zp_addr + cpu->x > 0xFF) {
-                    (*cycles) -= 1;
-                }else {
-                    break;
-                }
+            if (zp_addr + cpu->x > 0xFF) {
+                (*cycles) -= 1;
             }
             zp_addr += cpu->x;
             cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);

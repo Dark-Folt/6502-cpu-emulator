@@ -90,7 +90,7 @@ Test(CPU, load_zero_page_x_when_it_wraps)
     memory.data[0xFFFD] = 0x80; 
     memory.data[0x007F] = 0x37;
 
-    uint32_t cyles = 4;
+    uint32_t cyles = 5;
     cpu_execute_inst(&cyles, &memory, &cpu);
     cr_expect(cpu.a == 0x37, "0x37 doit être la valeur dans le registre a");
     cr_assert_eq(cyles, 0);
@@ -107,8 +107,8 @@ Test(CPU, load_zero_page_x_with_wrong_cycles)
 
     uint32_t cycles = 5;
     cpu_execute_inst(&cycles, &memory, &cpu);
-    cr_expect(cpu.a == 0x0, "0x65 doit être la valeur dans le registre a");
-    cr_assert_eq(cycles, 2);
+    cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
+    cr_assert_eq(cycles, 1);
     cr_expect_eq(cpu.z, 0);
     cr_expect_eq(cpu.n, 0);
 }
