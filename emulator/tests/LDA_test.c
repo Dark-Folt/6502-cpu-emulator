@@ -92,7 +92,7 @@ Test(CPU, load_zero_page_x_when_it_wraps)
 
     uint32_t cyles = 4;
     cpu_execute_inst(&cyles, &memory, &cpu);
-    cr_expect(cpu.a == 0x37, "0x65 doit être la valeur dans le registre a");
+    cr_expect(cpu.a == 0x37, "0x37 doit être la valeur dans le registre a");
     cr_assert_eq(cyles, 0);
     cr_expect_eq(cpu.z, 0);
     cr_expect_eq(cpu.n, 0);
@@ -149,26 +149,6 @@ Test(CPU, load_accumulator_absolute_x)
     cr_expect_eq(cpu.n, 0);
 }
 
-Test(CPU, load_accumulator_absolute_x_cross_pass)
-{
-    TODO:
-    // cpu_reset(&cpu, &memory);
-    // cpu.x = 0x06;
-    // memory.data[0xFFFC] = INS_LDA_ABSX;
-    // memory.data[0xFFFD] = 0x23; 
-    // memory.data[0xFFFE] = 0x56; 
-    // memory.data[0x5629] = 0x18; 
-
-    // uint32_t cycles = 4;
-    // cpu_execute_inst(&cycles, &memory, &cpu);
-
-    // cr_expect(cpu.a == 0x18, "0x18 doit être la valeur dans le registre a");
-    // cr_assert_eq(cycles, 0);
-    // cr_expect_eq(cpu.z, 0);
-    // cr_expect_eq(cpu.n, 0);
-}
-
-
 Test(CPU, load_accumulator_absolute_y)
 {
     cpu_reset(&cpu, &memory);
@@ -186,6 +166,83 @@ Test(CPU, load_accumulator_absolute_y)
     cr_expect_eq(cpu.z, 0);
     cr_expect_eq(cpu.n, 0);
 }
+
+Test(CPU, load_accumulator_index_x)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 0x24;
+    memory.data[0xFFFC] = INS_LDA_INDX;
+    memory.data[0xFFFD] = 0x23; 
+    memory.data[0x0047] = 0x65; 
+    memory.data[0x0048] = 0x65; 
+    memory.data[0x6565] = 0x04; 
+
+    uint32_t cycles = 6;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x04);
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+Test(CPU, load_accumulator_index_x_with_wrong_cycles)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 0x24;
+    memory.data[0xFFFC] = INS_LDA_INDX;
+    memory.data[0xFFFD] = 0x23; 
+    memory.data[0x0047] = 0x65; 
+    memory.data[0x0048] = 0x65; 
+    memory.data[0x6565] = 0x04; 
+
+    uint32_t cycles = 9;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    printf("cycles: %d\n",cycles);
+    cr_expect(cpu.a == 0x04);
+    cr_assert_eq(cycles, 3);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+
+Test(CPU, load_accumulator_index_y)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.y = 0x04;
+    memory.data[0xFFFC] = INS_LDA_INDY;
+    memory.data[0xFFFD] = 0x02; 
+    memory.data[0x0002] = 0x00; 
+    memory.data[0x0003] = 0x80; 
+    memory.data[0x8004] = 0x37; 
+
+    uint32_t cycles = 5;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.a == 0x37);
+    cr_assert_eq(cycles, 0);
+    cr_expect_eq(cpu.z, 0);
+    cr_expect_eq(cpu.n, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
