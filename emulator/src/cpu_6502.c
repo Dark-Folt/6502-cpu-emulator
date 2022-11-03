@@ -326,8 +326,47 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             (*cycles) -= 1;
             if (*cycles) return (*cycles);
         } break;
+        case INS_LDX_IM:
+        {
+            byte value = cpu_fetch_byte(cycles, memory, cpu);
+            cpu->x = value;
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDX_ZP:
+        {
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDX_ZPY:
+        {
+            byte zp_addr = cpu_fetch_byte(cycles, memory, cpu);
+            zp_addr += cpu->y;
+            cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            (*cycles) -= 1;
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDX_ABS:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu->x = cpu_read_byte_from_word_adress(cycles, addr, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_LDX_ABSY:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            word e_addr = addr + cpu->y;
+            if (e_addr - addr >= 0xFF)
+            {
+                (*cycles) -= 1;
+            }
+            cpu->x = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
         default:
-            printf("Instruction not handled %d\n", inst);
+            printf("Instruction not handled (0x%X)\n", inst);
+            exit(EXIT_FAILURE);
             break;
         }
     }

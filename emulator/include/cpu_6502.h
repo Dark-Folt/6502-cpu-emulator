@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// CPU Instruction set
+/**
+ * CPU Instruction set
+ * /
+ **/ 
+// LDA
 #define INS_LDA_IM      0xA9
 #define INS_LDA_ZP      0xA5
 #define INS_LDA_ZPX     0xB5
@@ -16,6 +20,13 @@
 #define INS_LDA_INDX    0xA1
 #define INS_LDA_INDY    0xB1
 #define INS_JSR         0x20  
+// LDX
+#define INS_LDX_IM      0xA2
+#define INS_LDX_ZP      0xA6
+#define INS_LDX_ZPY     0xB6
+#define INS_LDX_ABS     0xAE
+#define INS_LDX_ABSY    0xBE
+
 
 #define MEM_SIZE  1024 * 64
 
