@@ -189,16 +189,6 @@ cpu_read_byte_from_word_adress(uint32_t *cycles, word addr, mem_6502 *memory, cp
  * lb: low byte
  * hb: hight byte
 */
-// word
-// cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
-// {
-//     byte lb  = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
-//     byte hb  = cpu_read_byte_from_zp_adress(cycles, addr + 1, memory, cpu);
-//     (*cycles)--;
-
-//     return (lb | (hb << 8));
-// }
-
 word
 cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
 {
@@ -260,7 +250,6 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte value = cpu_fetch_byte(cycles, memory, cpu);
             cpu->a = value;
             set_LDA_status(cpu);
-            // if (*cycles) goto end_b;
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ZP:
