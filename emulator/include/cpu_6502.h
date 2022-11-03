@@ -32,6 +32,14 @@
 #define INS_LDY_ZPX     0xB4
 #define INS_LDY_ABS     0xAC
 #define INS_LDY_ABSX    0xBC
+// STA 
+#define INS_STA_ZP      0x85
+#define INS_STA_ZPX     0x95
+#define INS_STA_ABS     0x8D
+#define INS_STA_ABSX    0x9D
+#define INS_STA_ABSY    0x99
+#define INS_STA_INDX    0x81
+#define INS_STA_INDY    0x91
 
 
 #define MEM_SIZE  1024 * 64
@@ -159,6 +167,12 @@ cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 */
 void
 cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, cpu_6502 *cpu);
+
+void
+write_byte_at_zp_addr(uint32_t *cycles, byte zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
+
+void
+write_byte_at_word_addr(uint32_t *cycles, word zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
 
 /**
  * Permet l'execution d'un instruction qui sera

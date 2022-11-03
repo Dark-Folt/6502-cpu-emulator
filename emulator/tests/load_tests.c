@@ -416,29 +416,3 @@ Test(CPU, LDY_ABX_page_cross)
     cr_assert_eq(cycles, 0);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
