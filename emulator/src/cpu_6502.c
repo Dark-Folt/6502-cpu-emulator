@@ -544,7 +544,6 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         default:
             printf("Instruction not handled (0x%X)\n", inst);
             exit(EXIT_FAILURE);
-            break;
         }
     }
     return (*cycles);
