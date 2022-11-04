@@ -141,12 +141,110 @@ Test(CPU_2, STA_INDY)
     cpu_2.y = 0x44;
     memory_2.data[0xFFFC] = INS_STA_INDY;
     memory_2.data[0xFFFD] = 0x92; 
-    memory_2.data[0x00D6] = 0x24; 
-    memory_2.data[0x00D7] = 0x77; 
+    memory_2.data[0x0092] = 0x00; 
+    memory_2.data[0x0093] = 0x80; 
+    memory_2.data[0x8000 + 0x44] = 0x99; 
 
     uint32_t  cycles = 6;
     cpu_execute_inst(&cycles, &memory_2, &cpu_2);
 
-    cr_expect(memory_2.data[0x7724] == 0x99);
+    cr_expect(memory_2.data[0x8000 + 0x44] == 0x99);
     cr_expect(cycles == 0);
 }
+
+/**
+ * Store X register into memory
+*/
+Test(CPU_2, STX_ZP)
+{
+    cpu_2.x = 0x12;
+    memory_2.data[0xFFFC] = INS_STX_ZP;
+    memory_2.data[0xFFFD] = 0x84; 
+
+    uint32_t  cycles = 3;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x0084] == 0x12);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+Test(CPU_2, STX_ZPY)
+{
+    cpu_2.x = 0x12;
+    cpu_2.y = 0x08;
+
+    memory_2.data[0xFFFC] = INS_STX_ZPY;
+    memory_2.data[0xFFFD] = 0x84; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x84 + 0x08] == 0x12);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+Test(CPU_2, STX_ABS)
+{
+    cpu_2.x = 0x08;
+
+    memory_2.data[0xFFFC] = INS_STX_ABS;
+    memory_2.data[0xFFFD] = 0x97; 
+    memory_2.data[0xFFFE] = 0x61; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x6197] == 0x08);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+/**
+ * Store X register into memory
+*/
+Test(CPU_2, STY_ZP)
+{
+    cpu_2.y = 0x08;
+
+    memory_2.data[0xFFFC] = INS_STY_ZP;
+    memory_2.data[0xFFFD] = 0x97; 
+
+    uint32_t  cycles = 3;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x97] == 0x08);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+Test(CPU_2, STY_ZPX)
+{
+    cpu_2.y = 0x08;
+    cpu_2.x = 0x38;
+
+    memory_2.data[0xFFFC] = INS_STY_ZPX;
+    memory_2.data[0xFFFD] = 0x97; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x97 + 0x38] == 0x08);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+Test(CPU_2, STY_ABS)
+{
+    cpu_2.y = 0x08;
+
+    memory_2.data[0xFFFC] = INS_STY_ABS;
+    memory_2.data[0xFFFD] = 0x97; 
+    memory_2.data[0xFFFE] = 0x97; 
+
+    uint32_t  cycles = 4;
+    cpu_execute_inst(&cycles, &memory_2, &cpu_2);
+
+    cr_expect(memory_2.data[0x9797] == 0x08);
+    cr_expect(cycles == 0, "le nombre de cycle doit être égale à 0");
+}
+
+
+
+

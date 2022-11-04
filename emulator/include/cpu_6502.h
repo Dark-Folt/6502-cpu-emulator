@@ -40,13 +40,19 @@
 #define INS_STA_ABSY    0x99
 #define INS_STA_INDX    0x81
 #define INS_STA_INDY    0x91
-
+// STX
+#define INS_STX_ZP      0x86
+#define INS_STX_ZPY     0x96
+#define INS_STX_ABS     0x8E
+// STX
+#define INS_STY_ZP      0x84
+#define INS_STY_ZPX     0x94
+#define INS_STY_ABS     0x8C
 
 #define MEM_SIZE  1024 * 64
 
 typedef uint8_t     byte;
 typedef uint16_t    word;
-typedef uint32_t    qword;
 
 
 /**
@@ -56,7 +62,6 @@ typedef uint32_t    qword;
 typedef struct
 {
     byte data[MEM_SIZE];
-
 } mem_6502;
 
 /**
@@ -169,10 +174,10 @@ void
 cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, cpu_6502 *cpu);
 
 void
-write_byte_at_zp_addr(uint32_t *cycles, byte zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
+cpu_write_byte_at_zp_addr(uint32_t *cycles, byte zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
 
 void
-write_byte_at_word_addr(uint32_t *cycles, word zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
+cpu_write_byte_at_word_addr(uint32_t *cycles, word zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
 
 /**
  * Permet l'execution d'un instruction qui sera

@@ -247,7 +247,7 @@ cpu_write_word_at(uint32_t *cycles, word data, uint32_t dst, mem_6502 *memory, c
 }
 
 void
-write_byte_at_zp_addr(uint32_t *cycles,
+cpu_write_byte_at_zp_addr(uint32_t *cycles,
 byte zp_addr,
 byte value,
 mem_6502 *memory,
@@ -259,7 +259,7 @@ cpu_6502 *cpu)
 }
 
 void
-write_byte_at_word_addr(uint32_t *cycles,
+cpu_write_byte_at_word_addr(uint32_t *cycles,
 word addr,
 byte value,
 mem_6502 *memory,
@@ -446,7 +446,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_STA_ZP:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
-            write_byte_at_zp_addr(cycles, zp_addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->a, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_ZPX:
@@ -454,20 +454,20 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->x;
             (*cycles) -= 1;
-            write_byte_at_zp_addr(cycles, zp_addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->a, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_ABS:
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
-            write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_ABSX:
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
             addr += cpu->x;
-            write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
             (*cycles) -= 1;
             if (*cycles) return (*cycles);
         }break;
@@ -476,7 +476,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             word addr = cpu_fetch_word(cycles, memory, cpu);
             addr += cpu->y;
             (*cycles) -= 1;
-            write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_INDX:
@@ -485,16 +485,60 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             zp_addr += cpu->x;
             (*cycles) -= 1;
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
-            write_byte_at_word_addr(cycles, e_addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, e_addr, cpu->a, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_INDY:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
+            word e_addr_y = e_addr + cpu->y;
+            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr_y, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, e_addr_y, cpu->a, memory, cpu);
+            if (e_addr_y - e_addr >= 0xFF) // test if cross page
+            {
+                (*cycles) -= 1;
+            }
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STX_ZP:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->x, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STX_ZPY:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->y;
             (*cycles) -= 1;
-            word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
-            write_byte_at_word_addr(cycles, e_addr, cpu->a, memory, cpu);
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->x, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STX_ABS:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, addr, cpu->x, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STY_ZP:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->y, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STY_ZPX:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            zp_addr += cpu->x;
+            (*cycles) -= 1;
+            cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->y, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case INS_STY_ABS:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, addr, cpu->y, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         default:
