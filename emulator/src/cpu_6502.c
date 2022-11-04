@@ -221,10 +221,6 @@ cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_650
 word
 cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 {
-    // 6502 is little endian
-    // word data = memory->data[cpu->pc];
-    // data |= (memory->data[cpu->pc] << 8);
-    // cpu->pc++;
     byte lb = memory->data[cpu->pc];
     (*cycles) -= 1;
     byte hb = memory->data[cpu->pc + 1];
@@ -258,6 +254,15 @@ cpu_6502 *cpu)
     cpu->pc += 1;
 }
 
+/**
+ * Permet d'écrire un octet dans la memoire avec une @ de 16bits. 
+ * @param cycles : le nombre de cycles nécessaires pour l'instruction
+ * @param addr   : l'@ memoire dans la quelle on va ecrire l'octet
+ * @param value  : L'octet à ecrire dans la mémoire
+ * @param memory : Dans quel memoire on va ecrire ?
+ * @param cpu    : Le cpu en question
+ * 
+*/
 void
 cpu_write_byte_at_word_addr(uint32_t *cycles,
 word addr,

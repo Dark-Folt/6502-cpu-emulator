@@ -58,6 +58,21 @@ typedef uint16_t    word;
 /**
  * mem_6502
  * Dénie la mémoire
+ * Source : https://en.wikibooks.org/wiki/6502_Assembly
+ * zero page : $0000 - $00FF
+ *          The first of memory, which is faster to access than other pages;
+ *          Instructions can specify addresses within the zero page with a sigle byte
+ *          as opposed to two, so instructions that use the zero page instead of any other
+ *          page require one less CPU cycles to execute 
+ * 
+ * stack : $0100 - $01FF 
+ *          Last-in first-out data structure. Grows backwards from $01FF to $0100.
+ *          Used by some transfer, stack and subroutine instructions.
+ * 
+ * General-purpose : $0200 - $FFFF 
+ *          Memory that can be used for whatever purpose needed.
+ *          Devices that use the 6502 processor may choose to reserve sub-regions for
+ *          other purposes, such as memory-mapped I/0.
 */
 typedef struct
 {
