@@ -18,6 +18,8 @@ cpu_dump(const cpu_6502 *cpu)
 void
 mem_initialise(mem_6502 *mem)
 {
+    mem->begin_stack    = 0x01FF;
+    mem->end_stack      = 0x0100;
     size_t i;
     for(i=0; i < MEM_SIZE; i++) {
         mem->data[i] = 0;
@@ -34,8 +36,12 @@ mem_initialise(mem_6502 *mem)
 void
 cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
 {
+    // initialisation de la memoire
+    mem_initialise(mem);
+
+
     cpu->pc = 0xFFFC;
-    cpu->sp = 0x0100;
+    cpu->sp = mem->begin_stack + 1;
     // registre à 0
     cpu->a = 0;
     cpu->x = 0;
@@ -48,9 +54,6 @@ cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
     cpu->z = 0;
     cpu->d = 0;
     cpu->i = 0;
-
-    // initialisation de la memoire
-    mem_initialise(mem);
 }
 
 /**
@@ -276,6 +279,29 @@ cpu_6502 *cpu)
 }
 
 
+// TODO:  Est-ce necessaire ???
+void
+cpu_push_byte_on_stack(uint32_t *cycles, byte data, mem_6502 *memory, cpu_6502 *cpu)
+{
+    cpu->sp -= 1;
+    memory->data[cpu->sp] = data;
+    (*cycles) -= 1;
+}
+
+void
+cpu_push_word_on_stack(uint32_t *cycles, word data, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte lb = (data &  0xFF);
+    byte hb = (data >> 0x08);
+    /**
+     * On push dans ce sens car la stack evolue des @hot vers les bases
+     * Et que nous sommes en little endian
+    */
+    cpu_push_byte_on_stack(cycles, hb, memory, cpu);
+    cpu_push_byte_on_stack(cycles, lb, memory, cpu);
+}
+
+
 /**
  * Permet l'execution d'un instruction qui sera
  * lu dans la mémoire
@@ -367,10 +393,10 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         } break;
         case INS_JSR:
         {
-            word sr_addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu_write_word_at(cycles, cpu->pc - 1, cpu->sp, memory, cpu);
-            cpu->pc = sr_addr;
-            (*cycles) -= 1;
+            // word tr_addr = cpu_fetch_word(cycles, memory, cpu);
+            // cpu_push_word_on_stack(cycles, cpu->pc - 1, memory, cpu);
+            // cpu->pc = tr_addr;
+            // (*cycles) -= 1;
             if (*cycles) return (*cycles);
         } break;
         case INS_LDX_IM:

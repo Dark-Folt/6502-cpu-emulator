@@ -19,7 +19,6 @@
 #define INS_LDA_ABSY    0xB9
 #define INS_LDA_INDX    0xA1
 #define INS_LDA_INDY    0xB1
-#define INS_JSR         0x20  
 // LDX
 #define INS_LDX_IM      0xA2
 #define INS_LDX_ZP      0xA6
@@ -49,6 +48,37 @@
 #define INS_STY_ZPX     0x94
 #define INS_STY_ABS     0x8C
 
+/**
+ *************** JUMPS *******************
+
+ * > JSR : Jump To New Location Saving Return Address
+ *          The address before the next instruction (PC  - 1) is pushed onto the stack.
+ *          first the upper byte followed by the lower byte. As the stack grows backwards,
+ *          The return address is therefore stored as a little-endian number in memory.
+ *          PC is set to the targctet address.
+ * 
+ * > When you call a subroutine using JSR, two things happen:
+ *      - The address of the last byte of the JSR (That is the next instruction - 1) is pushed
+ *        onto the stack
+ *      - The programm counter jumps to the subroutine indicated.
+ *          
+ * > When the program encouters an RTS instruction, this happens:
+ *      - An address is popped off the stack
+ *      - The programm counter jumps to this address + 1
+ * 
+ * Exemple:
+ *       - source : https://www.nesdev.org/wiki/RTS_Trick
+ *      $C0E0: 20 00 80     JSR $8000
+ *      $C0E3: A2 00        LDX #$00
+ *      $C0E5: A0           LDY #$00
+ * 
+ *      $8000: A9 0F        LDA #$0F
+ *      $8002: 8D 15 40     STA $4015
+ *      $8005: 60               
+ *      
+*/
+#define INS_JSR         0x20  
+
 #define MEM_SIZE  1024 * 64
 
 typedef uint8_t     byte;
@@ -76,6 +106,8 @@ typedef uint16_t    word;
 */
 typedef struct
 {
+    word begin_stack;
+    word end_stack;
     byte data[MEM_SIZE];
 } mem_6502;
 
@@ -193,6 +225,12 @@ cpu_write_byte_at_zp_addr(uint32_t *cycles, byte zp_addr, byte value, mem_6502 *
 
 void
 cpu_write_byte_at_word_addr(uint32_t *cycles, word zp_addr, byte value, mem_6502 *memory, cpu_6502 *cpu);
+
+void
+cpu_push_byte_on_stack(uint32_t *cycles, byte data, mem_6502 *memory, cpu_6502 *cpu);
+
+void
+cpu_push_word_on_stack(uint32_t *cycles, word data, mem_6502 *memory, cpu_6502 *cpu);
 
 /**
  * Permet l'execution d'un instruction qui sera
