@@ -187,6 +187,15 @@ cpu_fetch_msb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
     return data;
 }
 
+word
+cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte lb = cpu_fetch_lsb(cycles, memory, cpu);
+    byte hb = cpu_fetch_lsb(cycles, memory, cpu);
+
+    return (lb | (hb << 8));
+}
+
 byte
 cpu_read_byte_from_zp_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_6502 *cpu)
 {
@@ -221,16 +230,6 @@ cpu_read_word_from_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_650
     return (lb | (hb << 8));
 }
 
-word
-cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
-{
-    byte lb = memory->data[cpu->pc];
-    (*cycles) -= 1;
-    byte hb = memory->data[cpu->pc + 1];
-    (*cycles) -= 1;
-
-    return (lb | (hb << 8));
-}
 
 /**
  * Write 2 bytes
@@ -254,7 +253,6 @@ cpu_6502 *cpu)
 {
     memory->data[zp_addr] = value;
     (*cycles) -= 1;
-    cpu->pc += 1;
 }
 
 /**
@@ -275,7 +273,6 @@ cpu_6502 *cpu)
 {
     memory->data[addr] = value;
     (*cycles) -= 1;
-    cpu->pc += 1;
 }
 
 
@@ -301,6 +298,23 @@ cpu_push_word_on_stack(uint32_t *cycles, word data, mem_6502 *memory, cpu_6502 *
     cpu_push_byte_on_stack(cycles, lb, memory, cpu);
 }
 
+byte
+cpu_pop_byte_off_stack(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte data = memory->data[cpu->sp];
+    memory->data[cpu->sp] = 0;
+    cpu->sp += 1;
+    (*cycles) -= 2;
+    return data;
+}
+
+word
+cpu_pop_word_off_stack(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
+{
+    byte lb = cpu_pop_byte_off_stack(cycles, memory, cpu);
+    byte hb = cpu_pop_byte_off_stack(cycles, memory, cpu);
+    return (lb | (hb << 8));
+}
 
 /**
  * Permet l'execution d'un instruction qui sera
@@ -323,7 +337,6 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = value;
             set_LDA_status(cpu);
-            if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ZP:
         {
@@ -393,17 +406,21 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         } break;
         case INS_JSR:
         {
-            // word tr_addr = cpu_fetch_word(cycles, memory, cpu);
-            // cpu_push_word_on_stack(cycles, cpu->pc - 1, memory, cpu);
-            // cpu->pc = tr_addr;
-            // (*cycles) -= 1;
-            if (*cycles) return (*cycles);
+            word tr_addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu_push_word_on_stack(cycles, cpu->pc - 1, memory, cpu);
+            cpu->pc = tr_addr;
+            (*cycles) -= 1;
         } break;
+        case INS_RTS_IMP:
+        {
+            word ret_addr = cpu_pop_word_off_stack(cycles, memory, cpu);
+            cpu->pc = ret_addr + 1;
+            (*cycles) -= 1;
+        }break;
         case INS_LDX_IM:
         {
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->x = value;
-            if (*cycles) return (*cycles);
         }break;
         case INS_LDX_ZP:
         {
@@ -439,7 +456,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         }break;
         case INS_LDY_IM:
         {
-            byte value = cpu_fetch_msb(cycles, memory, cpu);
+            byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->y = value;
             if (*cycles) return (*cycles);
         }break;
@@ -492,7 +509,6 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
             cpu_write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
-            if (*cycles) return (*cycles);
         }break;
         case INS_STA_ABSX:
         {

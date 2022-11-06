@@ -77,7 +77,10 @@
  *      $8005: 60               
  *      
 */
-#define INS_JSR         0x20  
+#define INS_JSR         0x20
+
+// RTS
+#define INS_RTS_IMP     0x60
 
 #define MEM_SIZE  1024 * 64
 
@@ -231,6 +234,12 @@ cpu_push_byte_on_stack(uint32_t *cycles, byte data, mem_6502 *memory, cpu_6502 *
 
 void
 cpu_push_word_on_stack(uint32_t *cycles, word data, mem_6502 *memory, cpu_6502 *cpu);
+
+byte
+cpu_pop_byte_off_stack(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
+
+word
+cpu_pop_word_off_stack(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 /**
  * Permet l'execution d'un instruction qui sera
