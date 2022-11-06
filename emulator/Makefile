@@ -31,7 +31,7 @@ $(TEST)/bin/%: $(TESTS) $(TOBJS)
 	$(CC) $^ -o $@ -lcriterion
 
 test: $(TEST)/bin $(TESTBINS) 
-	for test in $(TESTBINS); do ./$$test --verbose; done
+	for test in $(TESTBINS); do ./$$test; done
 
 
 clean:
