@@ -588,8 +588,28 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             cpu_write_byte_at_word_addr(cycles, addr, cpu->y, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
+        case INS_TAX_IMP:
+        {
+            cpu->x = cpu->a;
+            (*cycles) -= 1;
+        }break;
+        case INS_TAY_IMP:
+        {
+            cpu->y = cpu->a;
+            (*cycles) -= 1;
+        }break;
+        case INS_TSX_IMP:
+        {
+            cpu->x = cpu_read_byte_from_word_adress(cycles, cpu->sp, memory, cpu);
+        }break;
+        case INS_TXA_IMP:
+        {
+            cpu->a = cpu->x;
+            (*cycles) -= 1;
+        }break;
         default:
             printf("Instruction not handled (0x%X)\n", inst);
+            printf("Maybe you should verify the cycles\n");
             exit(EXIT_FAILURE);
         }
     }

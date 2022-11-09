@@ -724,6 +724,14 @@ Test(CPU, RTS)
 
 Test(CPU, JSR)
 {
+    // $C0E0: 20 00 80     JSR $8000
+    // $C0E3: A2 00        LDX #$00
+    // $C0E5: A0 00        LDY #$00
+
+    // $8000: A9 0F        LDA #$0F
+    // $8002: 8D 15 40     STA $4015
+    // $8005: 60           RTS
+
     cpu_reset(&cpu, &memory);
     cpu.pc = 0xC0E0;
     memory.data[0xC0E0] = INS_JSR; // 6 cycles
@@ -751,4 +759,52 @@ Test(CPU, JSR)
     cr_assert_eq(cycles, 0);
 }
 
+Test(CPU, TAX)
+{
+    cpu_reset(&cpu, &memory);
+    uint32_t cycles = 2;
+    cpu.x = 0;
+    cpu.a = 0x76;
+    memory.data[0xFFFC] = INS_TAX_IMP;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0x76);
+    cr_assert_eq(cycles, 0);
+}
 
+
+Test(CPU, TAY)
+{
+    cpu_reset(&cpu, &memory);
+    uint32_t cycles = 2;
+    cpu.y = 0;
+    cpu.a = 0x76;
+    memory.data[0xFFFC] = INS_TAY_IMP;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.y == 0x76);
+    cr_assert_eq(cycles, 0);
+}
+
+
+Test(CPU, TSX)
+{
+    cpu_reset(&cpu, &memory);
+    uint32_t cycles = 2 + 1;
+    cpu_push_byte_on_stack(&cycles, 0x12, &memory, &cpu);
+    cpu.x = 0x0;
+    memory.data[0xFFFC] = INS_TSX_IMP;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.x == 0x12);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, TXA)
+{
+    cpu_reset(&cpu, &memory);
+    uint32_t cycles = 2;
+    cpu.a = 0x0;
+    cpu.x = 0x88;
+    memory.data[0xFFFC] = INS_TXA_IMP;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.a == 0x88);
+    cr_assert_eq(cycles, 0);
+}

@@ -47,6 +47,11 @@
 #define INS_STY_ZP      0x84
 #define INS_STY_ZPX     0x94
 #define INS_STY_ABS     0x8C
+// TRANSFERT
+#define INS_TAX_IMP     0xAA
+#define INS_TAY_IMP     0xA8
+#define INS_TSX_IMP     0xBA
+#define INS_TXA_IMP     0x8A
 
 /**
  *************** JUMPS *******************
