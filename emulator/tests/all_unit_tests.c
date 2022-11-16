@@ -826,7 +826,7 @@ Test(CPU, SBC_IM_C_FLAG_N_FLAG_NOT_SET)
     cr_assert_eq(cycles, 0);
 }
 
-Test(CPU, SBC_IM_C_FLAG_N_FLAG_IS_SET)
+Test(CPU, SBC_ZP_C_FLAG_N_FLAG_IS_SET)
 {
     cpu_reset(&cpu, &memory);
     cpu.a = 0x23;
