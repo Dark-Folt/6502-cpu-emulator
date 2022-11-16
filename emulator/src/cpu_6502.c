@@ -607,6 +607,19 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             cpu->a = cpu->x;
             (*cycles) -= 1;
         }break;
+        case INS_SBC_IM:
+        {
+            byte v = cpu_fetch_lsb(cycles, memory, cpu);
+            cpu->a -= v;
+            if ( 0 == cpu->a) {
+                cpu->z = 1;
+            }
+
+            // si le 7 eme est set
+            if (0b01000000 && cpu->a) {
+                cpu->n =  1;
+            }
+        }break;
         default:
             printf("Instruction not handled (0x%X)\n", inst);
             printf("Maybe you should verify the cycles\n");

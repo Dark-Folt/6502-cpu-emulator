@@ -53,6 +53,9 @@
 #define INS_TSX_IMP     0xBA
 #define INS_TXA_IMP     0x8A
 
+// SUBSTRACT WITH CARRY
+#define INS_SBC_IM      0xE9
+
 /**
  *************** JUMPS *******************
 

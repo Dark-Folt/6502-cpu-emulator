@@ -808,3 +808,19 @@ Test(CPU, TXA)
     cr_expect(cpu.a == 0x88);
     cr_assert_eq(cycles, 0);
 }
+
+/**
+ * Substract with carry
+*/
+Test(CPU, SBC_IM_C_FLAG_N_FLAG_NOT_SET)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 0xa;
+    cpu.pc = 0xFFFC;
+    uint32_t cycles = 2;
+    memory.data[0xFFFC] = INS_SBC_IM;
+    memory.data[0xFFFD] = 0xa;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.a == 0x0);
+    cr_assert_eq(cycles, 0);
+}
