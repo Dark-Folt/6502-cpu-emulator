@@ -822,5 +822,20 @@ Test(CPU, SBC_IM_C_FLAG_N_FLAG_NOT_SET)
     memory.data[0xFFFD] = 0xa;
     cpu_execute_inst(&cycles, &memory, &cpu);
     cr_expect(cpu.a == 0x0);
+    cr_expect(cpu.z == 0x1);
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, SBC_IM_C_FLAG_N_FLAG_IS_SET)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 0x23;
+    cpu.pc = 0xFFFC;
+    uint32_t cycles = 3;
+    memory.data[0xFFFC] = INS_SBC_ZP;
+    memory.data[0xFFFD] = 0x60;
+    memory.data[0x0060] = 0x13;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.a == 0x10);
     cr_assert_eq(cycles, 0);
 }

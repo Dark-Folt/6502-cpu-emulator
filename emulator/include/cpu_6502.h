@@ -55,6 +55,7 @@
 
 // SUBSTRACT WITH CARRY
 #define INS_SBC_IM      0xE9
+#define INS_SBC_ZP      0xE5
 
 /**
  *************** JUMPS *******************
