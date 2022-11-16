@@ -839,3 +839,18 @@ Test(CPU, SBC_ZP_C_FLAG_N_FLAG_IS_SET)
     cr_expect(cpu.a == 0x10);
     cr_assert_eq(cycles, 0);
 }
+
+Test(CPU, SBC_ZP_X)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 0x23;
+    cpu.x = 0x6D;
+    cpu.pc = 0xFFFC;
+    uint32_t cycles = 4;
+    memory.data[0xFFFC] = INS_SBC_ZPX;
+    memory.data[0xFFFD] = 0x60;
+    memory.data[0x60 + 0x6D] = 0x13;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.a == 0x10);
+    cr_assert_eq(cycles, 0);
+}

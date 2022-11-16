@@ -626,6 +626,14 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte v = cpu_read_byte_from_zp_adress(cycles, zp, memory, cpu);
             cpu->a -= v;
         }break;
+        case INS_SBC_ZPX:
+        {
+            byte zp = cpu_fetch_lsb(cycles, memory, cpu);
+            byte ef_addr = zp + cpu->x;
+            byte v = cpu_read_byte_from_zp_adress(cycles, ef_addr, memory, cpu);
+            cpu->a -= v;
+            (*cycles) -= 1;
+        }break;
         default:
             printf("Instruction not handled (0x%X)\n", inst);
             printf("Maybe you should verify the cycles\n");
