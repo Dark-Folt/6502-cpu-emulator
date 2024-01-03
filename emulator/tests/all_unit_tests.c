@@ -751,4 +751,191 @@ Test(CPU, JSR)
     cr_assert_eq(cycles, 0);
 }
 
+Test(CPU, CMP_IM_ACC_INF_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 13;
+    memory.data[0xC0E0] = CMP_IM;
+    memory.data[0xC0E1] = 15;
 
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 2;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.n == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.z == cpu_copy.z, "Le flag z ne doit pas être modifié");
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, CMP_IM_ACC_SUP_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 25;
+    memory.data[0xC0E0] = CMP_IM;
+    memory.data[0xC0E1] = 15;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 2;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 0, "Le flag z doit être activé");
+    cr_expect(cpu.pc == 0xC0E0 + 2, "PC n'est pas incrémenté");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, CMP_IM_ACC_EQ_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 25;
+    memory.data[0xC0E0] = CMP_IM;
+    memory.data[0xC0E1] = 25;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 2;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 1, "Le flag z doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, CMP_ZERO_PAGE_ACC_INF_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 13;
+    // ZP
+    memory.data[0x00FA] = 15;
+
+    memory.data[0xC0E0] = CMP_ZP;
+    memory.data[0xC0E1] = 0xFA;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 3;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.n == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.z == cpu_copy.z, "Le flag z ne doit pas être modifié");
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ZP_ACC_SUP_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 25;
+    // ZP
+    memory.data[0x00FB] = 15;
+
+    memory.data[0xC0E0] = CMP_ZP;
+    memory.data[0xC0E1] = 0xFB;
+
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 3;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 0, "Le flag z doit être activé");
+    cr_expect(cpu.pc == 0xC0E0 + 2, "PC n'est pas incrémenté");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, CMP_ZP_ACC_EQ_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.pc = 0xC0E0;
+    cpu.a = 25;
+    // ZP
+    memory.data[0x00FA] = 25;
+
+    memory.data[0xC0E0] = CMP_ZP;
+    memory.data[0xC0E1] = 0xFA;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 3;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 1, "Le flag z doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0);
+}
+
+Test(CPU, CMP_ZERO_PAGE_X_ACC_INF_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 0x0F;
+    cpu.a = 13;
+
+    memory.data[0x80 + 0x0F] = 15;
+
+    cpu.pc = 0xC0E0;
+    memory.data[0xC0E0] = CMP_ZPX;
+    memory.data[0xC0E1] = 0x80;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.n == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.z == cpu_copy.z, "Le flag z ne doit pas être modifié");
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}

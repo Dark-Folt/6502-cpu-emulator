@@ -82,6 +82,13 @@
 // RTS
 #define INS_RTS_IMP     0x60
 
+/**
+ * Compare instruction
+*/
+#define CMP_IM          0xC9
+#define CMP_ZP          0xC5
+#define CMP_ZPX         0xD5
+
 #define MEM_SIZE  1024 * 64
 
 typedef uint8_t     byte;

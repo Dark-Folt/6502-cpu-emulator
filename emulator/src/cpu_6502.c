@@ -20,10 +20,8 @@ mem_initialise(mem_6502 *mem)
 {
     mem->begin_stack    = 0x01FF;
     mem->end_stack      = 0x0100;
-    size_t i;
-    for(i=0; i < MEM_SIZE; i++) {
-        mem->data[i] = 0;
-    }
+    // init data by 0
+    memset(mem->data, 0, MEM_SIZE);
 }
 
 /**
@@ -586,6 +584,62 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
             cpu_write_byte_at_word_addr(cycles, addr, cpu->y, memory, cpu);
+            if (*cycles) return (*cycles);
+        }break;
+        case CMP_IM:
+        {
+            word value = cpu_fetch_lsb(cycles, memory, cpu);
+            /**
+             * Compare acc value with addr value
+            */
+            uint16_t result = cpu->a - value;
+            if (result >= 0) 
+                cpu->c = 1;
+            if (result == 0)
+                cpu->z = 1;
+            // test if bit 7 is set
+            // when the result is negative
+            uint16_t mask = 1 << 7;
+            if ((result & mask) != 0)
+                cpu->n = 1;
+
+           if (*cycles) return (*cycles);
+        }break;
+        case CMP_ZP:
+        {
+            word addr = cpu_fetch_lsb(cycles, memory, cpu);
+            word value = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
+
+            uint16_t result = cpu->a - value;
+            if (result >= 0) 
+                cpu->c = 1;
+            if (result == 0)
+                cpu->z = 1;
+            // test if bit 7 is set
+            // when the result is negative
+            uint16_t mask = 1 << 7;
+            if ((result & mask) != 0)
+                cpu->n = 1;
+            if (*cycles) return (*cycles);
+        }break;
+        case CMP_ZPX:
+        {
+            word zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            zp_addr += cpu->x;
+            (*cycles) -= 1;
+            word value = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+
+            uint16_t result = cpu->a - value;
+            if (result >= 0) 
+                cpu->c = 1;
+            if (result == 0)
+                cpu->z = 1;
+            // test if bit 7 is set
+            // when the result is negative
+            uint16_t mask = 1 << 7;
+            if ((result & mask) != 0)
+                cpu->n = 1;
+
             if (*cycles) return (*cycles);
         }break;
         default:
