@@ -10,6 +10,7 @@ BIN=bin/main
 
 
 TEST=tests
+MACOSLIB=-I /opt/homebrew/include -L /opt/homebrew/lib
 TESTLIB=-lcriterion
 TOBJS=$(OBJ)/cpu_6502.o
 TESTS=$(wildcard $(TEST)/*.c)
@@ -28,7 +29,7 @@ $(OBJ)/%.o: $(SRC)/%.c
 
 
 $(TEST)/bin/%: $(TESTS) $(TOBJS)
-	$(CC) $^ -o $@ -lcriterion
+	$(CC) $(MACOSLIB) $(TESTLIB) $^ -o $@ 
 
 test: $(TEST)/bin $(TESTBINS) 
 	for test in $(TESTBINS); do ./$$test; done
