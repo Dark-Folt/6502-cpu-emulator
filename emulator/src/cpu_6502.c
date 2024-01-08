@@ -642,6 +642,45 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 
             if (*cycles) return (*cycles);
         }break;
+        case CMP_ABS:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            word value = cpu_read_byte_from_word_adress(cycles, addr, memory, cpu);
+
+            uint16_t result = cpu->a - value;
+            if (result >= 0) 
+                cpu->c = 1;
+            if (result == 0)
+                cpu->z = 1;
+            // test if bit 7 is set
+            // when the result is negative
+            uint16_t mask = 1 << 7;
+            if ((result & mask) != 0)
+                cpu->n = 1;
+
+            if (*cycles) return (*cycles);
+        }break;
+        case CMP_ABSX:
+        {
+            word addr = cpu_fetch_word(cycles, memory, cpu);
+            if (addr + cpu->x >= 0xFF) {
+                *cycles -= 1;
+            }
+            word e_addr = addr + cpu->x;
+            word value = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+
+            uint16_t result = cpu->a - value;
+            if (result >= 0) 
+                cpu->c = 1;
+            if (result == 0)
+                cpu->z = 1;
+            // test if bit 7 is set
+            // when the result is negative
+            uint16_t mask = 1 << 7;
+            if ((result & mask) != 0)
+                cpu->n = 1;
+            if (*cycles) return (*cycles);
+        }break;
         default:
             printf("Instruction not handled (0x%X)\n", inst);
             exit(EXIT_FAILURE);

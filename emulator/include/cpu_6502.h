@@ -88,6 +88,8 @@
 #define CMP_IM          0xC9
 #define CMP_ZP          0xC5
 #define CMP_ZPX         0xD5
+#define CMP_ABS         0xCD
+#define CMP_ABSX        0xDD
 
 #define MEM_SIZE  1024 * 64
 

@@ -939,3 +939,213 @@ Test(CPU, CMP_ZERO_PAGE_X_ACC_INF_MEMORY)
 
     cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
 }
+
+Test(CPU, CMP_ZERO_PAGE_X_ACC_SUP_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 0x0F;
+    cpu.a = 18;
+
+    memory.data[0x80 + 0x0F] = 15;
+
+    cpu.pc = 0xC0E0;
+    memory.data[0xC0E0] = CMP_ZPX;
+    memory.data[0xC0E1] = 0x80;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 0, "Le flag z doit être activé");
+    cr_expect(cpu.pc == 0xC0E0 + 2, "PC n'est pas incrémenté");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+
+Test(CPU, CMP_ABS_INF_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 15;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABS;
+    memory.data[0xC0E1] = 0x80;
+    memory.data[0xC0E2] = 0x12;
+
+    memory.data[0x1280] = 25;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.n == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.z == cpu_copy.z, "Le flag z ne doit pas être modifié");
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ABS_SUP_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 55;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABS;
+    memory.data[0xC0E1] = 0x80;
+    memory.data[0xC0E2] = 0x12;
+
+    memory.data[0x1280] = 15;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 0, "Le flag z doit être activé");
+    cr_expect(cpu.pc == 0xC0E0 + 3, "PC n'est pas incrémenté");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ABS_EQ_MEMORY)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.a = 15;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABS;
+    memory.data[0xC0E1] = 0x80;
+    memory.data[0xC0E2] = 0x12;
+
+    memory.data[0x1280] = 15;
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 1, "Le flag z doit être activé");
+    cr_expect(cpu.pc == 0xC0E0 + 3, "PC n'est pas incrémenté");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ABS_X_ACC_SUP_MEMORY_VALUE)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 15;
+    cpu.a = 36;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABSX;
+    memory.data[0xC0E1] = 0xDF;
+    memory.data[0xC0E2] = 0x00;
+
+    memory.data[0x00DF + cpu.x] = 23;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+    cr_expect(cpu.c == 1, "Le flag c doit être activé");
+    cr_expect(cpu.z == 0, "Le flag z doit être activé");
+    cr_expect(cpu.n == 0, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ABS_X_ACC_INF_MEMORY_VALUE)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 15;
+    cpu.a = 6;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABSX;
+    memory.data[0xC0E1] = 0xDF;
+    memory.data[0xC0E2] = 0x00;
+
+    memory.data[0x00DF + cpu.x] = 23;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.n == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.z == cpu_copy.z, "Le flag z ne doit pas être modifié");
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
+
+Test(CPU, CMP_ABS_X_ACC_EQ_MEMORY_VALUE)
+{
+    cpu_reset(&cpu, &memory);
+    cpu.x = 15;
+    cpu.a = 23;
+    cpu.pc = 0xC0E0;
+
+    memory.data[0xC0E0] = CMP_ABSX;
+    memory.data[0xC0E1] = 0xDF;
+    memory.data[0xC0E2] = 0x00;
+
+    memory.data[0x00DF + cpu.x] = 23;
+
+    // copy of the cpu
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 4;
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    cr_expect(cpu.n == 0, "Le flag n doit être désactivé");
+    cr_expect(cpu.z == 1, "Le flag n doit être activé");
+    cr_expect(cpu.c == 1, "Le flag n doit être activé");
+    // make sure othe flag are not affected
+    cr_expect(cpu.i == cpu_copy.i, "Le flag i ne doit pas être modifié");
+    cr_expect(cpu.d == cpu_copy.d, "Le flag d ne doit pas être modifié");
+    cr_expect(cpu.b == cpu_copy.b, "Le flag b ne doit pas être modifié");
+    cr_expect(cpu.v == cpu_copy.v, "Le flag v ne doit pas être modifié");
+
+    cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
+}
