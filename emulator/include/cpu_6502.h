@@ -99,7 +99,7 @@ typedef uint16_t    word;
 
 /**
  * mem_6502
- * Dénie la mémoire
+ * Define memory 
  * Source : https://en.wikibooks.org/wiki/6502_Assembly
  * zero page : $0000 - $00FF
  *          The first of memory, which is faster to access than other pages;
