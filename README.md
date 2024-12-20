@@ -1,4 +1,4 @@
-Voici un exemple de fichier `README.md` en anglais pour votre projet :
+[![CI - Build and Test](https://github.com/Dark-Folt/6502-cpu-emulator/actions/workflows/c-cpp.yml/badge.svg?branch=master)](https://github.com/Dark-Folt/6502-cpu-emulator/actions/workflows/c-cpp.yml)
 
 ---
 
