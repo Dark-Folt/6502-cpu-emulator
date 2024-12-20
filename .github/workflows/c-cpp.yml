@@ -1,0 +1,36 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Vérifie le dépôt GitHub
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Installe les dépendances requises
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make libcriterion-dev
+
+      # 3. Compile le projet
+      - name: Build project
+        run: make all
+
+      # 4. Lance les tests
+      - name: Run tests
+        run: make test
+
+      # 5. Nettoie les fichiers générés
+      - name: Clean project
+        run: make clean
