@@ -1,7 +1,5 @@
 [![CI - Build and Test](https://github.com/Dark-Folt/6502-cpu-emulator/actions/workflows/c-cpp.yml/badge.svg?branch=master)](https://github.com/Dark-Folt/6502-cpu-emulator/actions/workflows/c-cpp.yml)
 
----
-
 # **6502 CPU Emulator**
 
 This project is a simple 6502 CPU emulator written in C. The goal is to understand how the 6502 processor works by implementing its core functionality and executing tests to validate the behavior.
