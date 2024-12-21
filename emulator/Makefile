@@ -31,8 +31,13 @@ $(OBJ)/%.o: $(SRC)/%.c
 $(TEST)/bin/%: $(TESTS) $(TOBJS)
 	$(CC) $(MACOSLIB) $(TESTLIB) $^ -o $@ 
 
-test: $(TEST)/bin $(TESTBINS) 
-	for test in $(TESTBINS); do ./$$test; done
+
+test: $(TEST)/bin $(TESTBINS)
+	@for test in $(TESTBINS); do \
+		echo "Running test $$test..."; \
+		./$$test --crash|| (echo "Test $$test failed" && exit 1); \
+	done
+
 
 
 clean:

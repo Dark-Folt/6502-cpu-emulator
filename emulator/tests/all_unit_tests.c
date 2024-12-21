@@ -1149,3 +1149,84 @@ Test(CPU, CMP_ABS_X_ACC_EQ_MEMORY_VALUE)
 
     cr_assert_eq(cycles, 0, "cycles: %d\n", cycles);
 }
+
+Test(CPU, JMP_INDIRECT)
+{
+    cpu_reset(&cpu, &memory);
+
+    cpu.pc = 0xC000;
+
+    memory.data[0xC000] = INS_JMP_IND; // Opcode pour JMP (Indirect)
+    memory.data[0xC001] = 0x00; // LSB de l'adresse du vecteur
+    memory.data[0xC002] = 0x80; // MSB de l'adresse du vecteur
+
+    // Adresse indirecte : 0x8000 contient l'adresse cible
+    memory.data[0x8000] = 0x34; // LSB de l'adresse cible
+    memory.data[0x8001] = 0x12; // MSB de l'adresse cible
+
+    // Sauvegarder l'état initial du CPU
+    cpu_6502 cpu_copy;
+    memcpy(&cpu_copy, &cpu, sizeof(cpu_6502));
+
+    uint32_t cycles = 5; // 5 cycles pour JMP (Indirect)
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    // Vérifier que le PC a sauté à l'adresse cible
+    cr_assert_eq(cpu.pc, 0x1234, "PC incorrect après JMP (Indirect), attendu: 0x1234, obtenu: 0x%04X", cpu.pc);
+
+    // Vérifier que les cycles ont été utilisés
+    cr_assert_eq(cycles, 0, "Cycles incorrects après JMP (Indirect), restant: %d", cycles);
+
+    // Vérifier que les autres registres n'ont pas changé
+    cr_expect_eq(cpu.a, cpu_copy.a, "Le registre A ne doit pas être modifié");
+    cr_expect_eq(cpu.x, cpu_copy.x, "Le registre X ne doit pas être modifié");
+    cr_expect_eq(cpu.y, cpu_copy.y, "Le registre Y ne doit pas être modifié");
+}
+
+
+Test(CPU, JMP_ABS)
+{
+    cpu_reset(&cpu, &memory); // Reset the CPU and memory
+    cpu.pc = 0xC000; // Initial Program Counter set to 0xC000
+
+    // Set up the JMP instruction (0x4C), with a target address of 0x1234
+    memory.data[0xC000] = INS_JMP_ABS;  // Opcode for JMP ABSOLUTE
+    memory.data[0xC001] = 0x34;         // Low byte of the target address (0x1234)
+    memory.data[0xC002] = 0x12;         // High byte of the target address (0x1234)
+
+    // Execute the instruction
+    uint32_t cycles = 3; // JMP ABS takes 3 cycles
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    // Test if the Program Counter (PC) has been updated to the correct address
+    cr_expect_eq(cpu.pc, 0x1234, "The PC should jump to the address 0x1234");
+
+    // Check the number of cycles after execution
+    cr_assert_eq(cycles, 0, "Expected 0 cycles remaining after execution.");
+}
+
+Test(CPU, ADC_ZP)
+{
+    cpu_reset(&cpu, &memory);  // Reset the CPU and memory
+    cpu.pc = 0xC000;  // Set the initial Program Counter to 0xC000
+
+    // Set up the ADC instruction with the zero-page address 0x65 (opcode 0x65)
+    memory.data[0xC000] = 0x65;  // Opcode for ADC in Zero Page mode
+    memory.data[0xC001] = 0x65;  // Zero-page address 0x65 (target for the addition)
+
+    // Initialize the A register with an arbitrary value, for example, 0x10
+    cpu.a = 0x10;  // Initial value of the A register
+
+    // Set the value in memory at address 0x65 to be added to A
+    memory.data[0x65] = 0x05;  // The value at address 0x65 is 0x05
+
+    // Execute the ADC instruction
+    uint32_t cycles = 3;  // ADC in Zero Page mode takes 3 cycles
+    cpu_execute_inst(&cycles, &memory, &cpu);
+
+    // Check if the A register is updated correctly (A = 0x10 + 0x05)
+    cr_expect_eq(cpu.a, 0x15, "The A register should be 0x15 after the addition.");
+
+    // Check the number of remaining cycles after execution
+    cr_assert_eq(cycles, 0, "The number of remaining cycles should be 0.");
+}
