@@ -94,14 +94,35 @@
 #define CMP_ABS         0xCD
 #define CMP_ABSX        0xDD
 
-
 // ADD
 #define INS_ADC_ZP      0x65
+#define INS_ADC_IM      0x69
 
 #define MEM_SIZE 65536 // 64KB memory size
 
 typedef uint8_t     byte;
 typedef uint16_t    word;
+
+/**
+ * 
+ * CPU FLAGS 
+ */
+#define SET_FLAG(cpu, flag)   ((cpu)->p |= (flag))
+#define CLEAR_FLAG(cpu, flag) ((cpu)->p &= ~(flag))
+
+// Macro to test if a flag is set
+#define IS_FLAG_SET(cpu, flag) (((cpu)->p & (flag)) != 0)
+
+// Flag definitions
+// Bit masks for the 6502 status register (P)
+#define FLAG_CARRY    0x01  // Carry flag (C) (bit 0)
+#define FLAG_ZERO     0x02  // Zero flag (Z) (bit 1)
+#define FLAG_INTERRUPT 0x04 // Interrupt disable flag (I) (bit 2)
+#define FLAG_DECIMAL  0x08  // Decimal mode flag (D) (bit 3)
+#define FLAG_BREAK    0x10  // Break command flag (B) (bit 4, virtual)
+#define FLAG_UNUSED   0x20  // Unused bit 
+#define FLAG_OVERFLOW 0x40  // Overflow flag (V) (bit 6)
+#define FLAG_NEGATIVE 0x80  // Negative flag (N) (bit 7)
 
 
 /**
@@ -130,59 +151,35 @@ typedef struct
     byte data[MEM_SIZE];
 } mem_6502;
 
-/**
- * cpu_6502
- * Define the 6502 CPU with the following registers:
- * program counter (pc), stack pointer (sp), 
- * general-purpose registers (a, x, y),
- * flags (p, n, c, v, z, i)
- */
+
 typedef struct
 {
-    word pc; // Program Counter
-    word sp; // Stack Pointer
-    byte a; byte x; byte y; // General-purpose registers
-    byte b : 1; // Break flag
-    byte c : 1; // Carry flag
-    byte n : 1; // Negative flag
-    byte v : 1; // Overflow flag
-    byte z : 1; // Zero flag
-    byte d : 1; // Decimal mode flag
-    byte i : 1; // Interrupt disable flag
+    word pc;  // Program Counter
+    word sp;  // Stack Pointer
+    byte a;   // Accumulator
+    byte x;   // Index Register X
+    byte y;   // Index Register Y
+
+    byte p;   // Status register (flags: N, V, -, B, D, I, Z, C)
 } cpu_6502;
 
-/**
- * Affiche l'etat actuel du cpu
- * Affiche le contenue des registres
-*/
+
 void
 cpu_dump(const cpu_6502 *cpu);
 
 /**
  * @param mem_6502
- * Permet d'initialiser la mémoire
 */
 void
 mem_initialise(mem_6502 *mem);
 
 /**
+ * Reset the CPU and set all flags to 0
  * @param cpu_6502
  * @param mem_6502
- * Permet reset le cpu
- * Reset le cpu, c'est mettre tout les registres
- * à leurs états de départ
 */
 void
 cpu_reset(cpu_6502 * cpu, mem_6502 *mem);
-
-/**
- * LDA_set_status
- * permet de mettre des status apres instructions
- * pour certaines instructions les status sont pareil
- * donc on factorise
-*/
-void
-set_LDA_status(cpu_6502 *cpu);
 
 /**
  * Permet d'afficher le contenue da la mémoire en hexa
@@ -216,13 +213,13 @@ byte
 cpu_fetch_msb(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);
 
 byte
-cpu_read_byte_from_zp_adress(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
+cpu_read_byte_from_zp_address(uint32_t *cycles, byte src, mem_6502 *memory, cpu_6502 *cpu);
 
 byte
-cpu_read_byte_from_word_adress(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
+cpu_read_byte_from_word_address(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
 
 word
-cpu_read_word_from_adress(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
+cpu_read_word_from_address(uint32_t *cycles, word src, mem_6502 *memory, cpu_6502 *cpu);
 
 word
 cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu);

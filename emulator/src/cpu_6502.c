@@ -12,8 +12,9 @@ cpu_dump(const cpu_6502 *cpu)
 }
 
 /**
+ * Initialise the memory
+ * including the stack
  * @param mem_6502
- * Permet d'initialiser la mémoire
 */
 void
 mem_initialise(mem_6502 *mem)
@@ -25,11 +26,9 @@ mem_initialise(mem_6502 *mem)
 }
 
 /**
+ * Reset CPU flags and memory
  * @param cpu_6502
  * @param mem_6502
- * Permet reset le cpu
- * Reset le cpu, c'est mettre tout les registres
- * à leurs états de départ
 */
 void
 cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
@@ -37,34 +36,14 @@ cpu_reset(cpu_6502 * cpu, mem_6502 *mem)
     // initialisation de la memoire
     mem_initialise(mem);
 
-
     cpu->pc = 0xFFFC;
     cpu->sp = mem->begin_stack + 1;
-    // registre à 0
-    cpu->a = 0;
-    cpu->x = 0;
-    cpu->y = 0;
-    // flags
-    cpu->b = 0;
-    cpu->c = 0;
-    cpu->n = 0;
-    cpu->v = 0;
-    cpu->z = 0;
-    cpu->d = 0;
-    cpu->i = 0;
-}
 
-/**
- * LDA_set_status
- * permet de mettre des status apres instructions
- * pour certaines instructions les status sont pareil
- * donc on factorise
-*/
-void
-set_LDA_status(cpu_6502 *cpu)
-{
-    cpu->z = (cpu->a == 0);
-    cpu->n = (cpu->a & 0b1000000) > 0;
+    cpu->a = 0x00;
+    cpu->x = 0x00;
+    cpu->y = 0x00;
+    // flags
+    cpu->p = 0x00;
 }
 
 /**
@@ -195,7 +174,7 @@ cpu_fetch_word(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
 }
 
 byte
-cpu_read_byte_from_zp_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_6502 *cpu)
+cpu_read_byte_from_zp_address(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_6502 *cpu)
 {
     byte data = memory->data[addr];
     (*cycles) -= 1;
@@ -203,7 +182,7 @@ cpu_read_byte_from_zp_adress(uint32_t *cycles, byte addr, mem_6502 *memory, cpu_
 }
 
 byte
-cpu_read_byte_from_word_adress(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
+cpu_read_byte_from_word_address(uint32_t *cycles, word addr, mem_6502 *memory, cpu_6502 *cpu)
 {
     byte data = memory->data[addr];
     (*cycles) -= 1;
@@ -334,14 +313,12 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = value;
-            set_LDA_status(cpu);
             printf("LDA #$%02X -> A = 0x%02X\n", value, cpu->a);
         } break;
         case INS_LDA_ZP:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
-            cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
-            set_LDA_status(cpu);
+            cpu->a = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             printf("LDA $%02X -> A = 0x%02X (value at memory[0x%02X])\n", zp_addr, cpu->a, zp_addr);
             if (*cycles) return (*cycles);
         } break;
@@ -352,15 +329,14 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
                 (*cycles) -= 1;
             }
             zp_addr += cpu->x;
-            cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             (*cycles) -= 1;
-            set_LDA_status(cpu);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ABS:
         {
             word abs_addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu->a = cpu_read_byte_from_word_adress(cycles, abs_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, abs_addr, memory, cpu);
             printf("LDA $%04X -> A = 0x%02X (value at memory[0x%04X])\n", abs_addr, cpu->a, abs_addr);
             if (*cycles) return (*cycles);
         } break;
@@ -368,20 +344,18 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             word absx_addr = cpu_fetch_word(cycles, memory, cpu);
             (absx_addr += cpu->x);
-            cpu->a = cpu_read_byte_from_word_adress(cycles, absx_addr, memory, cpu);
-            set_LDA_status(cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, absx_addr, memory, cpu);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ABSY:
         {
             word absy_addr = cpu_fetch_word(cycles, memory, cpu);
             word absy_addr_y = absy_addr + cpu->y;
-            cpu->a = cpu_read_byte_from_word_adress(cycles, absy_addr_y, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, absy_addr_y, memory, cpu);
             if (absy_addr_y - absy_addr >= 0xFF)
             {
                 (*cycles) -= 1;
             }
-            set_LDA_status(cpu);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_INDX:
@@ -389,7 +363,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->x;
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
-            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, e_addr, memory, cpu);
             (*cycles) -= 1;
             if (*cycles) return (*cycles);
         }break;
@@ -398,7 +372,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             word e_addr_y = e_addr + cpu->y;
-            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr_y, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, e_addr_y, memory, cpu);
             if (e_addr_y - e_addr >= 0xFF) // test if cross page
             {
                 (*cycles) -= 1;
@@ -430,9 +404,13 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_ADC_ZP:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
-            cpu->a += cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            cpu->a += cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             printf("ADC $%02X -> A = 0x%02X\n", zp_addr, cpu->a);
             if (*cycles) return (*cycles);
+        }break;
+        case INS_ADC_IM:
+        {
+            
         }break;
         case INS_RTS_IMP:
         {
@@ -449,7 +427,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_LDX_ZP:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
-            cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            cpu->x = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             
             if (*cycles) return (*cycles);
         }break;
@@ -457,14 +435,14 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->y;
-            cpu->x = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            cpu->x = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             (*cycles) -= 1;
             if (*cycles) return (*cycles);
         }break;
         case INS_LDX_ABS:
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu->x = cpu_read_byte_from_word_adress(cycles, addr, memory, cpu);
+            cpu->x = cpu_read_byte_from_word_address(cycles, addr, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_LDX_ABSY:
@@ -475,7 +453,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             {
                 (*cycles) -= 1;
             }
-            cpu->x = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            cpu->x = cpu_read_byte_from_word_address(cycles, e_addr, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_LDY_IM:
@@ -488,21 +466,21 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         case INS_LDY_ZP:
         {
             byte addr = cpu_fetch_lsb(cycles, memory, cpu);
-            cpu->y = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
+            cpu->y = cpu_read_byte_from_zp_address(cycles, addr, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_LDY_ZPX:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             zp_addr += cpu->x;
-            cpu->y = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            cpu->y = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
             (*cycles) -= 1;
             if (*cycles) return (*cycles);
         }break;
         case INS_LDY_ABS:
         {
             word abs_addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu->y = cpu_read_byte_from_word_adress(cycles, abs_addr, memory, cpu); 
+            cpu->y = cpu_read_byte_from_word_address(cycles, abs_addr, memory, cpu); 
             if (*cycles) return (*cycles);
         }break;
         case INS_LDY_ABSX:
@@ -513,7 +491,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             {
                 (*cycles) -= 1;
             }
-            cpu->y = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            cpu->y = cpu_read_byte_from_word_address(cycles, e_addr, memory, cpu);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_ZP:
@@ -567,7 +545,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             word e_addr = cpu_read_word_from_adress(cycles, zp_addr, memory, cpu);
             word e_addr_y = e_addr + cpu->y;
-            cpu->a = cpu_read_byte_from_word_adress(cycles, e_addr_y, memory, cpu);
+            cpu->a = cpu_read_byte_from_word_address(cycles, e_addr_y, memory, cpu);
             cpu_write_byte_at_word_addr(cycles, e_addr_y, cpu->a, memory, cpu);
             if (e_addr_y - e_addr >= 0xFF) // test if cross page
             {
@@ -617,78 +595,139 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         }break;
         case CMP_IM:
         {
-            word value = cpu_fetch_lsb(cycles, memory, cpu);
-            /**
-             * Compare acc value with addr value
-            */
-            uint16_t result = cpu->a - value;
-            if (result >= 0) 
-                cpu->c = 1;
-            if (result == 0)
-                cpu->z = 1;
-            // test if bit 7 is set
-            // when the result is negative
-            uint16_t mask = 1 << 7;
-            if ((result & mask) != 0)
-                cpu->n = 1;
+            // Fetch the immediate value
+            byte value = cpu_fetch_lsb(cycles, memory, cpu);
 
-           if (*cycles) return (*cycles);
-        }break;
+            // Perform the subtraction (A - value)
+            uint16_t result = cpu->a - value;
+
+            // Update the Carry flag (C) - set if A >= value
+            if (cpu->a >= value) {
+                SET_FLAG(cpu, FLAG_CARRY);
+            } else {
+                CLEAR_FLAG(cpu, FLAG_CARRY);
+            }
+
+            // Update the Zero flag (Z) - set if result is zero
+            if ((result & 0xFF) == 0) {
+                SET_FLAG(cpu, FLAG_ZERO);
+            } else {
+                CLEAR_FLAG(cpu, FLAG_ZERO);
+            }
+
+            // Update the Negative flag (N) - set if bit 7 of result is set
+            if (result & FLAG_NEGATIVE) {
+                SET_FLAG(cpu, FLAG_NEGATIVE);
+            } else {
+                CLEAR_FLAG(cpu, FLAG_NEGATIVE);
+            }
+
+            // Return remaining cycles if necessary
+            if (*cycles) return (*cycles);
+        }
+        break;
         case CMP_ZP:
         {
-            word addr = cpu_fetch_lsb(cycles, memory, cpu);
-            word value = cpu_read_byte_from_zp_adress(cycles, addr, memory, cpu);
+            // Fetch the zero-page address
+            word zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
 
+            // Read the value from zero-page memory
+            byte value = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
+
+            // Perform the subtraction (A - value)
             uint16_t result = cpu->a - value;
-            if (result >= 0) 
-                cpu->c = 1;
-            if (result == 0)
-                cpu->z = 1;
-            // test if bit 7 is set
-            // when the result is negative
-            uint16_t mask = 1 << 7;
-            if ((result & mask) != 0)
-                cpu->n = 1;
+
+            // Update the Carry flag (C) - set if A >= value
+            if (cpu->a >= value) {
+                SET_FLAG(cpu, FLAG_CARRY);  // Set Carry flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_CARRY);  // Clear Carry flag
+            }
+
+            // Update the Zero flag (Z) - set if result is zero
+            if ((result & 0xFF) == 0) {
+                SET_FLAG(cpu, FLAG_ZERO);  // Set Zero flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_ZERO);  // Clear Zero flag
+            }
+
+            // Update the Negative flag (N) - set if bit 7 of the result is set
+            if (result & FLAG_NEGATIVE) {
+                SET_FLAG(cpu, FLAG_NEGATIVE);  // Set Negative flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_NEGATIVE);  // Clear Negative flag
+            }
+
+            // Return remaining cycles if necessary
             if (*cycles) return (*cycles);
-        }break;
+        }
+        break;
         case CMP_ZPX:
         {
+            // Fetch the zero-page address and apply the X offset
             word zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
-            zp_addr += cpu->x;
+            zp_addr = (zp_addr + cpu->x) & 0xFF; // Wrap around in zero-page
             (*cycles) -= 1;
-            word value = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
 
+            // Read the value from the zero-page address
+            byte value = cpu_read_byte_from_zp_address(cycles, zp_addr, memory, cpu);
+
+            // Perform the comparison
             uint16_t result = cpu->a - value;
-            if (result >= 0) 
-                cpu->c = 1;
-            if (result == 0)
-                cpu->z = 1;
-            // test if bit 7 is set
-            // when the result is negative
-            uint16_t mask = 1 << 7;
-            if ((result & mask) != 0)
-                cpu->n = 1;
+
+            // Update the flags using the macros
+            if (cpu->a >= value) {
+                SET_FLAG(cpu, FLAG_CARRY);  // Set Carry flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_CARRY);  // Clear Carry flag
+            }
+
+            if ((result & 0xFF) == 0) {
+                SET_FLAG(cpu, FLAG_ZERO);  // Set Zero flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_ZERO);  // Clear Zero flag
+            }
+
+            if (result & 0x80) {
+                SET_FLAG(cpu, FLAG_NEGATIVE);  // Set Negative flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_NEGATIVE);  // Clear Negative flag
+            }
 
             if (*cycles) return (*cycles);
-        }break;
+        }
+        break;
         case CMP_ABS:
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
-            word value = cpu_read_byte_from_word_adress(cycles, addr, memory, cpu);
+            word value = cpu_read_byte_from_word_address(cycles, addr, memory, cpu);
 
             uint16_t result = cpu->a - value;
-            if (result >= 0) 
-                cpu->c = 1;
-            if (result == 0)
-                cpu->z = 1;
-            // test if bit 7 is set
-            // when the result is negative
-            uint16_t mask = 1 << 7;
-            if ((result & mask) != 0)
-                cpu->n = 1;
+
+            // Update the Carry flag (C) - set if A >= value
+            if (cpu->a >= value) {
+                SET_FLAG(cpu, FLAG_CARRY);  // Set Carry flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_CARRY);  // Clear Carry flag
+            }
+
+            // Update the Zero flag (Z) - set if result is zero
+            if ((result & 0xFF) == 0) {
+                SET_FLAG(cpu, FLAG_ZERO);  // Set Zero flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_ZERO);  // Clear Zero flag
+            }
+
+            // Update the Negative flag (N) - set if bit 7 of the result is set
+            if (result & FLAG_NEGATIVE) {
+                SET_FLAG(cpu, FLAG_NEGATIVE);  // Set Negative flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_NEGATIVE);  // Clear Negative flag
+            }
 
             if (*cycles) return (*cycles);
-        }break;
+        }
+        break;
         case CMP_ABSX:
         {
             word addr = cpu_fetch_word(cycles, memory, cpu);
@@ -696,20 +735,34 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
                 *cycles -= 1;
             }
             word e_addr = addr + cpu->x;
-            word value = cpu_read_byte_from_word_adress(cycles, e_addr, memory, cpu);
+            word value = cpu_read_byte_from_word_address(cycles, e_addr, memory, cpu);
 
             uint16_t result = cpu->a - value;
-            if (result >= 0) 
-                cpu->c = 1;
-            if (result == 0)
-                cpu->z = 1;
-            // test if bit 7 is set
-            // when the result is negative
-            uint16_t mask = 1 << 7;
-            if ((result & mask) != 0)
-                cpu->n = 1;
+
+            // Update the Carry flag (C) - set if A >= value
+            if (cpu->a >= value) {
+                SET_FLAG(cpu, FLAG_CARRY);  // Set Carry flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_CARRY);  // Clear Carry flag
+            }
+
+            // Update the Zero flag (Z) - set if result is zero
+            if ((result & 0xFF) == 0) {
+                SET_FLAG(cpu, FLAG_ZERO);  // Set Zero flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_ZERO);  // Clear Zero flag
+            }
+
+            // Update the Negative flag (N) - set if bit 7 of the result is set
+            if (result & FLAG_NEGATIVE) {
+                SET_FLAG(cpu, FLAG_NEGATIVE);  // Set Negative flag
+            } else {
+                CLEAR_FLAG(cpu, FLAG_NEGATIVE);  // Clear Negative flag
+            }
+
             if (*cycles) return (*cycles);
-        }break;
+        }
+        break;
         default:
             printf("Instruction not handled (0x%X)\n", inst);
             exit(EXIT_FAILURE);
