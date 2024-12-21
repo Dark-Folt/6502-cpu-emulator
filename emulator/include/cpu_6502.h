@@ -77,13 +77,16 @@
  *      $8005: 60               
  *      
 */
-#define INS_JSR         0x20
+#define INS_JSR         0x20 // JUMP TO SUBROUTINE
+
+#define INS_JMP_ABS     0x4C // JUMP ABSOLUTE
+#define INS_JMP_IND     0x6C 
 
 // RTS
 #define INS_RTS_IMP     0x60
 
 /**
- * Compare instruction
+ * Compare instructions
 */
 #define CMP_IM          0xC9
 #define CMP_ZP          0xC5
@@ -91,7 +94,11 @@
 #define CMP_ABS         0xCD
 #define CMP_ABSX        0xDD
 
-#define MEM_SIZE  1024 * 64
+
+// ADD
+#define INS_ADC_ZP      0x65
+
+#define MEM_SIZE 65536 // 64KB memory size
 
 typedef uint8_t     byte;
 typedef uint16_t    word;
@@ -125,30 +132,24 @@ typedef struct
 
 /**
  * cpu_6502
- * Définie un le cpu 6502
- * avec les registres suivants: p, n, c, v, z, i
- * program counter   : pc
- * stack pointer    : sp
- * registre géneraux : a, x, y 
-*/
+ * Define the 6502 CPU with the following registers:
+ * program counter (pc), stack pointer (sp), 
+ * general-purpose registers (a, x, y),
+ * flags (p, n, c, v, z, i)
+ */
 typedef struct
 {
-    // programm counter
-    word pc;
-    // stack pointer
-    word sp;
-    // 8 bits registers
-    byte a; byte x; byte y;
-    // flags
-    byte b : 1;
-    byte c : 1;
-    byte n : 1;
-    byte v : 1;
-    byte z : 1;
-    byte d : 1;
-    byte i : 1;
-
-} cpu_6502 ;
+    word pc; // Program Counter
+    word sp; // Stack Pointer
+    byte a; byte x; byte y; // General-purpose registers
+    byte b : 1; // Break flag
+    byte c : 1; // Carry flag
+    byte n : 1; // Negative flag
+    byte v : 1; // Overflow flag
+    byte z : 1; // Zero flag
+    byte d : 1; // Decimal mode flag
+    byte i : 1; // Interrupt disable flag
+} cpu_6502;
 
 /**
  * Affiche l'etat actuel du cpu

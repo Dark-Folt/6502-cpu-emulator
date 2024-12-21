@@ -335,12 +335,14 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = value;
             set_LDA_status(cpu);
+            printf("LDA #$%02X -> A = 0x%02X\n", value, cpu->a);
         } break;
         case INS_LDA_ZP:
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->a = cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
             set_LDA_status(cpu);
+            printf("LDA $%02X -> A = 0x%02X (value at memory[0x%02X])\n", zp_addr, cpu->a, zp_addr);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ZPX:
@@ -359,6 +361,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             word abs_addr = cpu_fetch_word(cycles, memory, cpu);
             cpu->a = cpu_read_byte_from_word_adress(cycles, abs_addr, memory, cpu);
+            printf("LDA $%04X -> A = 0x%02X (value at memory[0x%04X])\n", abs_addr, cpu->a, abs_addr);
             if (*cycles) return (*cycles);
         } break;
         case INS_LDA_ABSX:
@@ -407,8 +410,30 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
             word tr_addr = cpu_fetch_word(cycles, memory, cpu);
             cpu_push_word_on_stack(cycles, cpu->pc - 1, memory, cpu);
             cpu->pc = tr_addr;
+            printf("JSR $%04X -> Jump to subroutine at 0x%04X\n", tr_addr, tr_addr);
             (*cycles) -= 1;
         } break;
+        case INS_JMP_ABS:
+        {
+            word abs_addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu->pc = abs_addr;
+            printf("JMP $%04X -> Jump to address 0x%04X\n", abs_addr, abs_addr);
+            if (*cycles) return (*cycles);
+        } break;
+        case INS_JMP_IND:
+        {
+            word target_addr = cpu_fetch_word(cycles, memory, cpu);
+            word final_addr = cpu_read_word_from_adress(cycles, target_addr, memory, cpu);
+            cpu->pc = final_addr;
+            if (*cycles) return (*cycles);
+        } break;
+        case INS_ADC_ZP:
+        {
+            byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
+            cpu->a += cpu_read_byte_from_zp_adress(cycles, zp_addr, memory, cpu);
+            printf("ADC $%02X -> A = 0x%02X\n", zp_addr, cpu->a);
+            if (*cycles) return (*cycles);
+        }break;
         case INS_RTS_IMP:
         {
             word ret_addr = cpu_pop_word_off_stack(cycles, memory, cpu);
@@ -419,6 +444,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->x = value;
+            printf("LDX #$%02X -> X = 0x%02X\n", value, cpu->x);
         }break;
         case INS_LDX_ZP:
         {
@@ -456,6 +482,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte value = cpu_fetch_lsb(cycles, memory, cpu);
             cpu->y = value;
+            printf("LDY #$%02X -> Y = 0x%02X\n", value, cpu->y);
             if (*cycles) return (*cycles);
         }break;
         case INS_LDY_ZP:
@@ -493,6 +520,7 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         {
             byte zp_addr = cpu_fetch_lsb(cycles, memory, cpu);
             cpu_write_byte_at_zp_addr(cycles, zp_addr, cpu->a, memory, cpu);
+            printf("STA $%02X -> memory[0x%02X] = 0x%02X\n", zp_addr, zp_addr, cpu->a);
             if (*cycles) return (*cycles);
         }break;
         case INS_STA_ZPX:
@@ -505,8 +533,9 @@ cpu_execute_inst(uint32_t *cycles, mem_6502 *memory, cpu_6502 *cpu)
         }break;
         case INS_STA_ABS:
         {
-            word addr = cpu_fetch_word(cycles, memory, cpu);
-            cpu_write_byte_at_word_addr(cycles, addr, cpu->a, memory, cpu);
+            word abs_addr = cpu_fetch_word(cycles, memory, cpu);
+            cpu_write_byte_at_word_addr(cycles, abs_addr, cpu->a, memory, cpu);
+            printf("STA $%04X -> memory[0x%04X] = 0x%02X\n", abs_addr, abs_addr, cpu->a);
         }break;
         case INS_STA_ABSX:
         {
